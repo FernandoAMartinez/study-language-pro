@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Nihongo Study — 日本語を学ぼう</title>
+    <base href="/" />
+
+    <!-- Dark mode: apply class before paint to prevent flash -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem('theme');
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (stored === 'dark' || (!stored && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+
+        window.themeManager = {
+            isDark: function () {
+                return document.documentElement.classList.contains('dark');
+            },
+            setTheme: function (theme) {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                localStorage.setItem('theme', theme);
+            }
+        };
+
+        // PWA install prompt — capture early before Blazor boots
+        window.pwaInstall = {
+            _deferredPrompt: null,
+            _dotNetRef: null,
+
+            init: function (dotNetRef) {
+                this._dotNetRef = dotNetRef;
+                // If prompt was already captured before Blazor loaded, notify immediately
+                if (this._deferredPrompt) {
+                    dotNetRef.invokeMethodAsync('OnInstallAvailable');
+                }
+                window.addEventListener('appinstalled', function () {
+                    window.pwaInstall._deferredPrompt = null;
+                    try { window.pwaInstall._dotNetRef.invokeMethodAsync('OnAppInstalled'); } catch (_) { }
+                });
+            },
+
+            canInstall: function () {
+                return !!this._deferredPrompt;
+            },
+
+            prompt: async function () {
+                if (!this._deferredPrompt) return false;
+                this._deferredPrompt.prompt();
+                var result = await this._deferredPrompt.userChoice;
+                this._deferredPrompt = null;
+                return result.outcome === 'accepted';
+            }
+        };
+
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            window.pwaInstall._deferredPrompt = e;
+            if (window.pwaInstall._dotNetRef) {
+                window.pwaInstall._dotNetRef.invokeMethodAsync('OnInstallAvailable');
+            }
+        });
+    </script>
+
+    <link rel="preload" id="webassembly" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1B1930" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="日本語 Study" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+    <!-- Google Fonts: M PLUS Rounded 1c (UI) + Noto Serif JP (flashcard kanji display) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="css/app.css" />
+    <link href="study-language-pro.styles.css" rel="stylesheet" />
+    <script type="importmap"></script>
+</head>
+
+<body class="bg-[#F9F7F4] dark:bg-[#0F0E1C]">
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        Ocurrió un error inesperado.
+        <a href="." class="reload">Recargar</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="js/swipe-interop.js"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,69 @@
+@page "/flashcards"
+@inject ILocalStorageService Storage
+
+<PageTitle>Tarjetas — Nihongo Study</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+            <h1 class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5] tracking-tight">Tarjetas</h1>
+            <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-0.5">フラッシュカード</p>
+        </div>
+
+        @if (_allTags.Any())
+        {
+            <div class="flex items-center gap-2">
+                <label class="text-xs text-[#6B6480] dark:text-[#9590A8] font-bold uppercase tracking-wide shrink-0">Etiqueta:</label>
+                <select @onchange="TagFilterChanged"
+                    class="text-sm border border-[#E5E2EC] dark:border-white/10 rounded-xl px-3 py-1.5 text-[#1A1523] dark:text-[#EDE9F5] focus:outline-none focus:ring-2 focus:ring-[#E8402A]/30 bg-white dark:bg-[#211E35] font-medium">
+                    <option value="">Todas (@_allEntries.Count)</option>
+                    @foreach (var tag in _allTags)
+                    {
+                        var count = _allEntries.Count(e => e.Tags.Contains(tag));
+                        <option value="@tag">@tag (@count)</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+
+    @if (_loading)
+    {
+        <div class="text-center py-12 text-[#B5B0BE] dark:text-[#6A6480] text-sm font-medium">Cargando…</div>
+    }
+    else
+    {
+        <FlashcardSession Cards="_filteredEntries" />
+    }
+</div>
+
+@code {
+    private List<VocabularyEntry> _allEntries = [];
+    private IReadOnlyList<VocabularyEntry> _filteredEntries = [];
+    private List<string> _allTags = [];
+    private string _selectedTag = string.Empty;
+    private bool _loading = true;
+
+    private const string StorageKey = "vocabulary_entries";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allEntries = await Storage.GetItemAsync<List<VocabularyEntry>>(StorageKey) ?? [];
+        _allTags = _allEntries.SelectMany(e => e.Tags).Distinct().OrderBy(t => t).ToList();
+        ApplyFilter();
+        _loading = false;
+    }
+
+    private void TagFilterChanged(ChangeEventArgs e)
+    {
+        _selectedTag = e.Value?.ToString() ?? string.Empty;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        _filteredEntries = string.IsNullOrEmpty(_selectedTag)
+            ? _allEntries
+            : _allEntries.Where(e => e.Tags.Contains(_selectedTag)).ToList();
+    }
+}

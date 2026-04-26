@@ -1,0 +1,177 @@
+@page "/"
+@using System.Text.Json
+@using study_language_pro.Models
+@inject ILocalStorageService Storage
+@inject IJSRuntime JS
+
+<PageTitle>Vocabulario — Nihongo Study</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+    <!-- Page header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5] tracking-tight">Vocabulario</h1>
+            <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-0.5">単語帳</p>
+        </div>
+        @if (!_showForm)
+        {
+            <div class="flex items-center gap-2">
+                <button @onclick="ShowAddForm"
+                    class="flex items-center gap-1.5 bg-[#E8402A] hover:bg-[#d03320] active:bg-[#bc2d1c] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors shadow-[0_2px_10px_rgba(232,64,42,0.35)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Agregar
+                </button>
+                <label class="flex items-center gap-1.5 bg-[#F3F0EC] dark:bg-[#211E35] hover:bg-[#EAE6E0] dark:hover:bg-[#2A2640] text-[#6B6480] dark:text-[#9590A8] text-xs font-bold px-3.5 py-2 rounded-xl transition-colors cursor-pointer border border-[#E5E2EC] dark:border-white/8">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+                    </svg>
+                    Importar
+                    <InputFile OnChange="ImportFromJson" accept=".json" class="hidden" />
+                </label>
+            </div>
+        }
+    </div>
+
+    @if (_importMessage is not null)
+    {
+        <div class="mb-4 px-4 py-3 rounded-2xl text-sm font-medium @(_importError ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/60 dark:border-red-800/40" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40")">
+            @_importMessage
+        </div>
+    }
+
+    @if (_showForm)
+    {
+        <div class="mb-5">
+            <VocabularyForm Entry="_editingEntry" OnSave="SaveEntry" OnCancel="CancelForm" />
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <div class="text-center py-12 text-[#B5B0BE] dark:text-[#6A6480] text-sm font-medium">Cargando…</div>
+    }
+    else
+    {
+        <VocabularyList Entries="_entries" OnEdit="StartEdit" OnDelete="DeleteEntry" />
+    }
+</div>
+
+@code {
+    private List<VocabularyEntry> _entries = [];
+    private VocabularyEntry? _editingEntry;
+    private bool _showForm;
+    private bool _loading = true;
+    private string? _importMessage;
+    private bool _importError;
+
+    private const string StorageKey = "vocabulary_entries";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _entries = await Storage.GetItemAsync<List<VocabularyEntry>>(StorageKey) ?? [];
+        _loading = false;
+    }
+
+    private void ShowAddForm()
+    {
+        _editingEntry = null;
+        _showForm = true;
+    }
+
+    private void StartEdit(VocabularyEntry entry)
+    {
+        _editingEntry = entry;
+        _showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        _editingEntry = null;
+        _showForm = false;
+    }
+
+    private async Task SaveEntry(VocabularyEntry entry)
+    {
+        var existing = _entries.FindIndex(e => e.Id == entry.Id);
+        if (existing >= 0)
+            _entries[existing] = entry;
+        else
+            _entries.Insert(0, entry);
+
+        await Storage.SetItemAsync(StorageKey, _entries);
+        _editingEntry = null;
+        _showForm = false;
+    }
+
+    private async Task DeleteEntry(Guid id)
+    {
+        _entries.RemoveAll(e => e.Id == id);
+        await Storage.SetItemAsync(StorageKey, _entries);
+    }
+
+    private async Task ImportFromJson(InputFileChangeEventArgs e)
+    {
+        _importMessage = null;
+        _importError = false;
+
+        try
+        {
+            const long maxSize = 5 * 1024 * 1024;
+            await using var stream = e.File.OpenReadStream(maxSize);
+            using var ms = new System.IO.MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Seek(0, System.IO.SeekOrigin.Begin);
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var imported = await JsonSerializer.DeserializeAsync<List<VocabularyImportDto>>(ms, options);
+
+            if (imported is null || imported.Count == 0)
+            {
+                _importMessage = "El archivo no contiene entradas válidas.";
+                _importError = true;
+                return;
+            }
+
+            int added = 0;
+            int skippedDuplicate = 0;
+
+            var existingKeys = _entries
+                .Select(x => $"{x.Romaji.Trim().ToLowerInvariant()}|{x.Kanji.Trim().ToLowerInvariant()}")
+                .ToHashSet();
+
+            foreach (var dto in imported)
+            {
+                if (string.IsNullOrWhiteSpace(dto.Romaji) && string.IsNullOrWhiteSpace(dto.Kanji))
+                    continue;
+
+                var key = $"{dto.Romaji.Trim().ToLowerInvariant()}|{dto.Kanji.Trim().ToLowerInvariant()}";
+                if (existingKeys.Contains(key))
+                {
+                    skippedDuplicate++;
+                    continue;
+                }
+
+                var entry = dto.ToVocabularyEntry();
+                _entries.Insert(0, entry);
+                existingKeys.Add(key);
+                added++;
+            }
+
+            await Storage.SetItemAsync(StorageKey, _entries);
+
+            var msg = added > 0
+                ? $"{added} palabra(s) importada(s) correctamente."
+                : "No se importaron palabras nuevas.";
+            if (skippedDuplicate > 0)
+                msg += $" {skippedDuplicate} duplicado(s) omitido(s).";
+            _importMessage = msg;
+        }
+        catch (Exception ex)
+        {
+            _importMessage = $"Error al importar: {ex.Message}";
+            _importError = true;
+        }
+    }
+}

@@ -1,0 +1,136 @@
+@using study_language_pro.Models
+
+<div class="bg-white dark:bg-[#19182A] rounded-3xl shadow-[0_4px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_32px_rgba(0,0,0,0.45)] p-6">
+    <h2 class="text-base font-bold text-[#1A1523] dark:text-[#EDE9F5] mb-5 tracking-tight">
+        @(Entry is null ? "Agregar palabra" : "Editar palabra")
+    </h2>
+
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="grid gap-4">
+            <div>
+                <label class="block text-xs font-bold text-[#6B6480] dark:text-[#9590A8] mb-1.5 uppercase tracking-wide">漢字 Kanji</label>
+                <InputText @bind-Value="_model.Kanji" class="field-input" placeholder="ej. 私" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#6B6480] dark:text-[#9590A8] mb-1.5 uppercase tracking-wide">かな Kana</label>
+                <InputText @bind-Value="_model.Kana" class="field-input" placeholder="ej. わたし" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#6B6480] dark:text-[#9590A8] mb-1.5 uppercase tracking-wide">
+                    Romaji <span class="text-[#E8402A]">*</span>
+                </label>
+                <InputText @bind-Value="_model.Romaji" class="field-input" placeholder="ej. watashi" />
+                @if (_showRomajiError)
+                {
+                    <p class="text-xs text-[#E8402A] mt-1 font-medium">El Romaji es obligatorio.</p>
+                }
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#6B6480] dark:text-[#9590A8] mb-1.5 uppercase tracking-wide">
+                    Significado en español <span class="text-[#E8402A]">*</span>
+                </label>
+                <InputText @bind-Value="_model.Significado" class="field-input" placeholder="ej. yo, yo mismo" />
+                @if (_showSignificadoError)
+                {
+                    <p class="text-xs text-[#E8402A] mt-1 font-medium">El Significado es obligatorio.</p>
+                }
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#6B6480] dark:text-[#9590A8] mb-1.5 uppercase tracking-wide">Ejemplo de uso</label>
+                <InputTextArea @bind-Value="_model.Ejemplo" rows="2" class="field-input resize-none"
+                    placeholder="ej. 私は学生です" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#6B6480] dark:text-[#9590A8] mb-1.5 uppercase tracking-wide">Tipo de palabra</label>
+                <InputSelect @bind-Value="_model.TipoPalabra" class="field-input">
+                    <option value="">— sin especificar —</option>
+                    <option value="sustantivo">Sustantivo</option>
+                    <option value="verbo">Verbo</option>
+                    <option value="adjetivo">Adjetivo</option>
+                    <option value="adverbio">Adverbio</option>
+                    <option value="partícula">Partícula</option>
+                    <option value="otro">Otro</option>
+                </InputSelect>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#6B6480] dark:text-[#9590A8] mb-1.5 uppercase tracking-wide">Etiquetas</label>
+                <InputText @bind-Value="_tagsInput" class="field-input"
+                    placeholder="ej. N5, pronombres (separadas por coma)" />
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2.5 sm:flex-row mt-6">
+            <button type="submit"
+                class="flex-1 bg-[#E8402A] hover:bg-[#d03320] active:bg-[#bc2d1c] text-white text-sm font-bold py-3 px-4 rounded-2xl transition-colors shadow-[0_2px_12px_rgba(232,64,42,0.30)]">
+                @(Entry is null ? "Agregar palabra" : "Guardar cambios")
+            </button>
+            @if (OnCancel.HasDelegate)
+            {
+                <button type="button" @onclick="OnCancel"
+                    class="flex-1 bg-[#F3F0EC] dark:bg-[#211E35] hover:bg-[#EAE6E0] dark:hover:bg-[#2A2640] text-[#6B6480] dark:text-[#9590A8] text-sm font-bold py-3 px-4 rounded-2xl transition-colors">
+                    Cancelar
+                </button>
+            }
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public VocabularyEntry? Entry { get; set; }
+    [Parameter] public EventCallback<VocabularyEntry> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private VocabularyEntry _model = new();
+    private string _tagsInput = string.Empty;
+    private bool _showRomajiError;
+    private bool _showSignificadoError;
+
+    protected override void OnParametersSet()
+    {
+        if (Entry is not null)
+        {
+            _model = new VocabularyEntry
+            {
+                Id = Entry.Id,
+                Kanji = Entry.Kanji,
+                Kana = Entry.Kana,
+                Romaji = Entry.Romaji,
+                Significado = Entry.Significado,
+                Ejemplo = Entry.Ejemplo,
+                Tags = new List<string>(Entry.Tags),
+                TipoPalabra = Entry.TipoPalabra,
+                CreatedAt = Entry.CreatedAt
+            };
+            _tagsInput = string.Join(", ", Entry.Tags);
+        }
+        else
+        {
+            _model = new VocabularyEntry();
+            _tagsInput = string.Empty;
+        }
+        _showRomajiError = false;
+        _showSignificadoError = false;
+    }
+
+    private async Task HandleSubmit()
+    {
+        _showRomajiError = string.IsNullOrWhiteSpace(_model.Romaji);
+        _showSignificadoError = string.IsNullOrWhiteSpace(_model.Significado);
+        if (_showRomajiError || _showSignificadoError) return;
+
+        _model.Tags = _tagsInput
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        await OnSave.InvokeAsync(_model);
+        _model = new VocabularyEntry();
+        _tagsInput = string.Empty;
+    }
+}

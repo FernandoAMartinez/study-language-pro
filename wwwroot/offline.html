@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Sin conexión — Nihongo Study</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #F9F7F4;
+            --surface: #FFFFFF;
+            --text-1: #1A1523;
+            --text-2: #6B6480;
+            --accent: #E8402A;
+            --border: rgba(0,0,0,0.07);
+            --shadow: 0 8px 40px rgba(0,0,0,0.10);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0F0E1C;
+                --surface: #19182A;
+                --text-1: #EDE9F5;
+                --text-2: #9590A8;
+                --border: rgba(255,255,255,0.07);
+                --shadow: 0 8px 40px rgba(0,0,0,0.50);
+            }
+        }
+
+        body {
+            font-family: "M PLUS Rounded 1c", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            padding: 1.5rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 1.75rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            padding: 2.5rem 2rem;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            width: 56px;
+            height: 56px;
+            background: var(--accent);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            box-shadow: 0 4px 16px rgba(232, 64, 42, 0.35);
+        }
+
+        .logo-text {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 700;
+            font-family: serif;
+            line-height: 1;
+        }
+
+        .icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--text-1);
+        }
+
+        .subtitle {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.04em;
+        }
+
+        p {
+            font-size: 0.875rem;
+            color: var(--text-2);
+            line-height: 1.65;
+            margin-bottom: 2rem;
+        }
+
+        a {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.875rem;
+            padding: 0.75rem 1.75rem;
+            border-radius: 0.875rem;
+            box-shadow: 0 2px 12px rgba(232, 64, 42, 0.35);
+            transition: opacity 0.15s;
+        }
+
+        a:hover { opacity: 0.88; }
+        a:active { opacity: 0.78; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <span class="logo-text">日</span>
+        </div>
+        <span class="icon">📡</span>
+        <h1>Sin conexión</h1>
+        <p class="subtitle">オフライン</p>
+        <p>No se detectó conexión a internet. Verificá tu red y recargá la página para seguir estudiando.</p>
+        <a href="/">Intentar de nuevo</a>
+    </div>
+</body>
+</html>
