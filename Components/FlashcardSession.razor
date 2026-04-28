@@ -47,7 +47,7 @@
 
             <div class="grid grid-cols-3 gap-3 mb-7">
                 <div class="bg-[#F9F7F4] dark:bg-[#211E35] rounded-2xl p-3">
-                    <p class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5]">@Cards.Count</p>
+                    <p class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5]">@_deck.Count</p>
                     <p class="text-[11px] text-[#6B6480] dark:text-[#9590A8] mt-0.5 font-medium">Total</p>
                 </div>
                 <div class="bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl p-3">
@@ -67,7 +67,7 @@
         </div>
     </div>
 }
-else if (!Cards.Any())
+else if (!_deck.Any())
 {
     <div class="flex flex-col items-center justify-center py-20 gap-4">
         <div class="w-20 h-20 rounded-3xl bg-[#F3F0EC] dark:bg-[#211E35] flex items-center justify-center">
@@ -81,12 +81,12 @@ else if (!Cards.Any())
 }
 else
 {
-    var current = Cards[_currentIndex];
+    var current = _deck[_currentIndex];
 
     <!-- Progress bar -->
     <div class="mb-5">
         <div class="flex justify-between text-xs text-[#6B6480] dark:text-[#9590A8] mb-2 font-medium">
-            <span>@(_currentIndex + 1) <span class="opacity-50">/ @Cards.Count</span></span>
+            <span>@(_currentIndex + 1) <span class="opacity-50">/ @_deck.Count</span></span>
             <span>
                 <span class="text-emerald-600 dark:text-emerald-400">@_knownCount ✓</span>
                 <span class="mx-1 opacity-30">·</span>
@@ -95,7 +95,7 @@ else
         </div>
         <div class="h-1.5 bg-[#E8E4EF] dark:bg-[#211E35] rounded-full overflow-hidden">
             <div class="h-full bg-[#E8402A] rounded-full transition-all duration-500 ease-out"
-                style="width: @((_currentIndex * 100.0 / Cards.Count).ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%">
+                style="width: @((_currentIndex * 100.0 / _deck.Count).ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%">
             </div>
         </div>
     </div>
@@ -164,6 +164,7 @@ else
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<VocabularyEntry> Cards { get; set; } = [];
 
+    private List<VocabularyEntry> _deck = [];
     private int _currentIndex;
     private bool isFlipped;
     private bool _showSummary;
@@ -184,7 +185,7 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_needsSwipeAttach && !_showSummary && Cards.Any())
+        if (_needsSwipeAttach && !_showSummary && _deck.Any())
         {
             _needsSwipeAttach = false;
             _selfRef ??= DotNetObjectReference.Create(this);
@@ -200,7 +201,7 @@ else
     [JSInvokable]
     public async Task OnSwipe(string direction)
     {
-        if (_isAnswering || _showSummary || !Cards.Any()) return;
+        if (_isAnswering || _showSummary || !_deck.Any()) return;
         await AnswerWithAnimation(direction == "right");
     }
 
@@ -213,7 +214,7 @@ else
         StateHasChanged();
         await Task.Delay(400);
 
-        var current = Cards[_currentIndex];
+        var current = _deck[_currentIndex];
         if (known)
             _knownCount++;
         else
@@ -225,7 +226,7 @@ else
         _exitClass = string.Empty;
         isFlipped = false;
 
-        if (_currentIndex + 1 >= Cards.Count)
+        if (_currentIndex + 1 >= _deck.Count)
         {
             _showSummary = true;
             await SaveSession();
@@ -249,7 +250,7 @@ else
         {
             Id = Guid.NewGuid(),
             Date = DateTime.UtcNow,
-            TotalCards = Cards.Count,
+            TotalCards = _deck.Count,
             KnownCount = _knownCount,
             ReviewCount = _reviewCount,
             ReviewedWordIds = new List<string>(_reviewedWordIds)
@@ -260,6 +261,7 @@ else
 
     private void Restart()
     {
+        _deck = Cards.OrderBy(_ => Random.Shared.Next()).ToList();
         _currentIndex = 0;
         isFlipped = false;
         _showSummary = false;
