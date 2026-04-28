@@ -1,0 +1,155 @@
+@using study_language_pro.Models
+
+<div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 flex flex-col gap-4">
+
+    <!-- Sentence with blanks -->
+    <div class="text-lg leading-loose text-[#1A1523] dark:text-[#EDE9F5] font-medium" lang="ja" style="font-family:'Noto Serif JP',serif">
+        @foreach (var part in _parts)
+        {
+            if (part.IsBlank)
+            {
+                var idx = part.BlankIndex;
+                <input type="text"
+                       lang="ja"
+                       autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="none"
+                       spellcheck="false"
+                       placeholder="___"
+                       disabled="@_checked"
+                       value="@_answers[idx]"
+                       @oninput="e => OnInput(idx, e.Value?.ToString() ?? string.Empty)"
+                       class="inline-block mx-1 px-2 py-0.5 w-20 text-center rounded-lg border text-base
+                              @GetInputClass(idx)
+                              focus:outline-none focus:ring-2 focus:ring-[#E8402A]/30
+                              disabled:opacity-80 disabled:cursor-default
+                              transition-colors" />
+            }
+            else
+            {
+                <span>@part.Text</span>
+            }
+        }
+    </div>
+
+    <!-- Hints -->
+    <div class="flex flex-wrap gap-2">
+        @foreach (var blank in Exercise.Blanks)
+        {
+            <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#F3F0EC] dark:bg-[#211E35] text-[#6B6480] dark:text-[#9590A8]">
+                <span class="text-[#B5B0BE] dark:text-[#5A5470] mr-1">pista:</span>@blank.Hint
+            </span>
+        }
+    </div>
+
+    <!-- Feedback after check -->
+    @if (_checked)
+    {
+        <div class="@(_allCorrect ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/50" : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/50") border rounded-xl px-4 py-3 flex flex-col gap-1">
+            <p class="text-sm font-bold @(_allCorrect ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400")">
+                @(_allCorrect ? "¡Correcto!" : "Revisá tus respuestas")
+            </p>
+            @if (!_allCorrect)
+            {
+                <p class="text-xs text-[#6B6480] dark:text-[#9590A8]">
+                    Respuesta: <span lang="ja" class="font-bold text-[#1A1523] dark:text-[#EDE9F5]" style="font-family:'Noto Serif JP',serif">@string.Join("、", Exercise.Blanks.Select(b => b.Answer))</span>
+                </p>
+            }
+            <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-0.5">@Exercise.Explanation</p>
+        </div>
+
+        <!-- English gloss -->
+        <p class="text-xs text-[#B5B0BE] dark:text-[#6A6480] italic">@Exercise.English</p>
+    }
+
+    <!-- Action buttons -->
+    <div class="flex gap-2 mt-1">
+        @if (!_checked)
+        {
+            <button @onclick="Check" disabled="@(!AnyAnswerFilled)"
+                class="flex-1 py-2 rounded-xl text-sm font-bold transition-colors
+                       @(AnyAnswerFilled
+                           ? "bg-[#E8402A] hover:bg-[#d03320] active:bg-[#bc2d1c] text-white shadow-[0_2px_8px_rgba(232,64,42,0.30)]"
+                           : "bg-[#F3F0EC] dark:bg-[#211E35] text-[#B5B0BE] dark:text-[#5A5470] cursor-not-allowed")">
+                Verificar
+            </button>
+        }
+        else
+        {
+            <button @onclick="Reset"
+                class="px-4 py-2 rounded-xl text-sm font-semibold text-[#6B6480] dark:text-[#9590A8] hover:bg-[#F3F0EC] dark:hover:bg-[#211E35] transition-colors">
+                Reintentar
+            </button>
+            <button @onclick="() => OnNext.InvokeAsync()"
+                class="flex-1 py-2 rounded-xl text-sm font-bold bg-[#E8402A] hover:bg-[#d03320] active:bg-[#bc2d1c] text-white shadow-[0_2px_8px_rgba(232,64,42,0.30)] transition-colors">
+                Siguiente →
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ExerciseSet Exercise { get; set; } = default!;
+    [Parameter] public EventCallback OnNext { get; set; }
+
+    private record Part(string Text, bool IsBlank, int BlankIndex = -1);
+
+    private List<Part> _parts = [];
+    private string[] _answers = [];
+    private bool _checked;
+    private bool _allCorrect;
+
+    private bool AnyAnswerFilled => _answers.Any(a => !string.IsNullOrWhiteSpace(a));
+
+    protected override void OnParametersSet()
+    {
+        BuildParts();
+        Reset();
+    }
+
+    private void BuildParts()
+    {
+        _parts = [];
+        var sentence = Exercise.Sentence;
+        var blankIdx = 0;
+        var segments = sentence.Split("___");
+        for (var i = 0; i < segments.Length; i++)
+        {
+            if (!string.IsNullOrEmpty(segments[i]))
+                _parts.Add(new Part(segments[i], false));
+            if (i < segments.Length - 1)
+                _parts.Add(new Part(string.Empty, true, blankIdx++));
+        }
+    }
+
+    private void Reset()
+    {
+        _answers = new string[Exercise.Blanks.Length];
+        for (var i = 0; i < _answers.Length; i++) _answers[i] = string.Empty;
+        _checked = false;
+        _allCorrect = false;
+    }
+
+    private void OnInput(int idx, string value)
+    {
+        _answers[idx] = value;
+    }
+
+    private void Check()
+    {
+        _checked = true;
+        _allCorrect = Enumerable.Range(0, Exercise.Blanks.Length).All(i =>
+            string.Equals(_answers[i].Trim(), Exercise.Blanks[i].Answer.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string GetInputClass(int idx)
+    {
+        if (!_checked)
+            return "border-[#E5E2EC] dark:border-white/10 bg-white dark:bg-[#211E35] text-[#1A1523] dark:text-[#EDE9F5]";
+
+        var correct = string.Equals(_answers[idx].Trim(), Exercise.Blanks[idx].Answer.Trim(), StringComparison.OrdinalIgnoreCase);
+        return correct
+            ? "border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
+            : "border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400";
+    }
+}

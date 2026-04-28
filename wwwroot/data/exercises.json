@@ -1,0 +1,135 @@
+[
+  {
+    "Id": "ex-001",
+    "Type": "fill_blank",
+    "Level": "N5",
+    "Sentence": "わたし___がくせいです。",
+    "Display": "わたし___ がくせいです。",
+    "Blanks": [
+      { "Position": 0, "Answer": "は", "Hint": "partícula de tema" }
+    ],
+    "GrammarPoint": "は (tema)",
+    "English": "I am a student.",
+    "Explanation": "は marca el tema de la oración. Aquí, わたし (yo) es el tema."
+  },
+  {
+    "Id": "ex-002",
+    "Type": "fill_blank",
+    "Level": "N5",
+    "Sentence": "これ___ほん___。",
+    "Display": "これ___ ほん___。",
+    "Blanks": [
+      { "Position": 0, "Answer": "は", "Hint": "partícula de tema" },
+      { "Position": 1, "Answer": "です", "Hint": "cópula formal" }
+    ],
+    "GrammarPoint": "は (tema)",
+    "English": "This is a book.",
+    "Explanation": "は marca el tema (これ = esto) y です es la cópula formal que equivale a 'es/son'."
+  },
+  {
+    "Id": "ex-003",
+    "Type": "fill_blank",
+    "Level": "N5",
+    "Sentence": "えき___どこ___すか。",
+    "Display": "えき___ どこ___すか。",
+    "Blanks": [
+      { "Position": 0, "Answer": "は", "Hint": "partícula de tema" },
+      { "Position": 1, "Answer": "で", "Hint": "parte del verbo desiderative" }
+    ],
+    "GrammarPoint": "は (tema)",
+    "English": "Where is the station?",
+    "Explanation": "えきはどこですか: えき (estación) es el tema marcado por は; どこ (dónde) + です + か forma la pregunta."
+  },
+  {
+    "Id": "ex-004",
+    "Type": "fill_blank",
+    "Level": "N5",
+    "Sentence": "がっこう___いきます。",
+    "Display": "がっこう___ いきます。",
+    "Blanks": [
+      { "Position": 0, "Answer": "に", "Hint": "partícula de destino" }
+    ],
+    "GrammarPoint": "に (destino/dirección)",
+    "English": "I go to school.",
+    "Explanation": "に indica el destino con verbos de movimiento como いきます (ir) y きます (venir)."
+  },
+  {
+    "Id": "ex-005",
+    "Type": "fill_blank",
+    "Level": "N5",
+    "Sentence": "としょかん___ほん___よみます。",
+    "Display": "としょかん___ ほん___ よみます。",
+    "Blanks": [
+      { "Position": 0, "Answer": "で", "Hint": "partícula de lugar de acción" },
+      { "Position": 1, "Answer": "を", "Hint": "partícula de objeto directo" }
+    ],
+    "GrammarPoint": "で (lugar de acción) / を (objeto directo)",
+    "English": "I read a book at the library.",
+    "Explanation": "で marca el lugar donde ocurre la acción (としょかん = biblioteca); を marca el objeto directo del verbo (ほん = libro)."
+  },
+  {
+    "Id": "ex-006",
+    "Type": "fill_blank",
+    "Level": "N5",
+    "Sentence": "まいにち にほんご___べんきょうします。",
+    "Display": "まいにち にほんご___ べんきょうします。",
+    "Blanks": [
+      { "Position": 0, "Answer": "を", "Hint": "partícula de objeto directo" }
+    ],
+    "GrammarPoint": "を (objeto directo)",
+    "English": "I study Japanese every day.",
+    "Explanation": "を marca el objeto directo del verbo. にほんごをべんきょうします = estudiar japonés."
+  },
+  {
+    "Id": "ex-007",
+    "Type": "fill_blank",
+    "Level": "N4",
+    "Sentence": "もっとはやく___ください。",
+    "Display": "もっとはやく___ ください。",
+    "Blanks": [
+      { "Position": 0, "Answer": "して", "Hint": "forma て de する" }
+    ],
+    "GrammarPoint": "〜てください (petición educada)",
+    "English": "Please do it faster.",
+    "Explanation": "〜てください se usa para pedir amablemente que alguien haga algo. El verbo va en forma て."
+  },
+  {
+    "Id": "ex-008",
+    "Type": "fill_blank",
+    "Level": "N4",
+    "Sentence": "きのう えいが___みました。",
+    "Display": "きのう えいが___ みました。",
+    "Blanks": [
+      { "Position": 0, "Answer": "を", "Hint": "partícula de objeto directo" }
+    ],
+    "GrammarPoint": "を (objeto directo)",
+    "English": "Yesterday I watched a movie.",
+    "Explanation": "きのう (ayer) + えいが (película) + を (objeto) + みました (vi) — pasado formal de みる."
+  },
+  {
+    "Id": "ex-009",
+    "Type": "fill_blank",
+    "Level": "N4",
+    "Sentence": "この しごとは むずかしい___、たのしいです。",
+    "Display": "この しごとは むずかしい___、たのしいです。",
+    "Blanks": [
+      { "Position": 0, "Answer": "けど", "Hint": "conjunción adversativa informal" }
+    ],
+    "GrammarPoint": "〜けど / 〜が (aunque / pero)",
+    "English": "This job is difficult, but it's fun.",
+    "Explanation": "けど (o が en registro formal) conecta dos oraciones con contraste. Es similar a 'pero' o 'aunque'."
+  },
+  {
+    "Id": "ex-010",
+    "Type": "fill_blank",
+    "Level": "N4",
+    "Sentence": "あめ___ふっています。",
+    "Display": "あめ___ ふっています。",
+    "Blanks": [
+      { "Position": 0, "Answer": "が", "Hint": "partícula de sujeto" }
+    ],
+    "GrammarPoint": "が (sujeto)",
+    "English": "It is raining.",
+    "Explanation": "が marca el sujeto de la acción. あめがふる = llover (lit. la lluvia cae). 〜ています indica acción en curso."
+  }
+]

@@ -1,0 +1,148 @@
+@page "/ejercicios"
+@using study_language_pro.Models
+@inject HttpClient Http
+
+<PageTitle>Ejercicios — Nihongo Study</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+            <h1 class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5] tracking-tight">Ejercicios</h1>
+            <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-0.5">文法練習</p>
+        </div>
+
+        @if (_levels.Count > 1)
+        {
+            <div class="flex items-center gap-2">
+                <label class="text-xs text-[#6B6480] dark:text-[#9590A8] font-bold uppercase tracking-wide shrink-0">Nivel:</label>
+                <select @onchange="LevelFilterChanged"
+                    class="text-sm border border-[#E5E2EC] dark:border-white/10 rounded-xl px-3 py-1.5 text-[#1A1523] dark:text-[#EDE9F5] focus:outline-none focus:ring-2 focus:ring-[#E8402A]/30 bg-white dark:bg-[#211E35] font-medium">
+                    <option value="">Todos</option>
+                    @foreach (var lvl in _levels)
+                    {
+                        <option value="@lvl">@lvl</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+
+    @if (_loading)
+    {
+        <div class="text-center py-12 text-[#B5B0BE] dark:text-[#6A6480] text-sm font-medium">Cargando…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-xl px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            Error al cargar los ejercicios: @_error
+        </div>
+    }
+    else if (!_filtered.Any())
+    {
+        <div class="flex flex-col items-center justify-center py-20 gap-4">
+            <div class="w-20 h-20 rounded-3xl bg-[#F3F0EC] dark:bg-[#211E35] flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 text-[#C5C0CE] dark:text-[#5A5470]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                </svg>
+            </div>
+            <p class="text-sm font-semibold text-[#1A1523] dark:text-[#EDE9F5]">Sin ejercicios</p>
+            <p class="text-xs text-[#6B6480] dark:text-[#9590A8]">No hay ejercicios para el nivel seleccionado.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Groups by grammar point -->
+        @foreach (var group in _groups)
+        {
+            <section class="mb-8">
+                <!-- Grammar point header -->
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="shrink-0 w-1.5 h-6 rounded-full bg-[#E8402A]"></span>
+                    <div>
+                        <h2 class="text-sm font-bold text-[#1A1523] dark:text-[#EDE9F5]" lang="ja">@group.Key</h2>
+                        <span class="text-[11px] text-[#B5B0BE] dark:text-[#6A6480]">@group.Value.Count ejercicio@(group.Value.Count != 1 ? "s" : "")</span>
+                    </div>
+                </div>
+
+                <!-- Exercise(s) in this group — one at a time, stepped -->
+                @{
+                    var groupIdx = _groupIndex.GetValueOrDefault(group.Key, 0);
+                    var current = group.Value[groupIdx];
+                }
+                <FillBlankExercise Exercise="current" OnNext="() => AdvanceGroup(group.Key, group.Value.Count)" />
+
+                <!-- Progress indicator -->
+                @if (group.Value.Count > 1)
+                {
+                    <div class="flex justify-center gap-1.5 mt-3">
+                        @for (var i = 0; i < group.Value.Count; i++)
+                        {
+                            var dotI = i;
+                            <span class="w-1.5 h-1.5 rounded-full transition-colors @(dotI == groupIdx ? "bg-[#E8402A]" : "bg-[#E5E2EC] dark:bg-white/10")"></span>
+                        }
+                    </div>
+                }
+            </section>
+        }
+    }
+</div>
+
+@code {
+    private List<ExerciseSet> _all = [];
+    private List<ExerciseSet> _filtered = [];
+    private List<string> _levels = [];
+    private Dictionary<string, List<ExerciseSet>> _groups = [];
+    private Dictionary<string, int> _groupIndex = [];
+    private string _selectedLevel = string.Empty;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _all = await Http.GetFromJsonAsync<List<ExerciseSet>>("data/exercises.json") ?? [];
+            _levels = _all.Select(e => e.Level).Distinct().OrderBy(l => l).ToList();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void LevelFilterChanged(ChangeEventArgs e)
+    {
+        _selectedLevel = e.Value?.ToString() ?? string.Empty;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        _filtered = string.IsNullOrEmpty(_selectedLevel)
+            ? _all
+            : _all.Where(e => e.Level == _selectedLevel).ToList();
+
+        _groups = _filtered
+            .GroupBy(e => e.GrammarPoint)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Reset index for any group that just appeared
+        foreach (var key in _groups.Keys)
+        {
+            _groupIndex.TryAdd(key, 0);
+        }
+    }
+
+    private void AdvanceGroup(string key, int count)
+    {
+        var next = (_groupIndex.GetValueOrDefault(key, 0) + 1) % count;
+        _groupIndex[key] = next;
+    }
+}
