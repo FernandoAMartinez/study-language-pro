@@ -126,6 +126,16 @@ else
                     <p class="kanji-text text-4xl font-bold text-[#1A1523] dark:text-[#EDE9F5] text-center">@current.Romaji</p>
                 }
                 <p class="text-[11px] text-[#C5C0CE] dark:text-[#4A4460] mt-5 text-center font-medium tracking-wide">Tocá · ← No sé · → Lo sé</p>
+                <button @onclick:stopPropagation="true" @onclick="() => SpeakCard(current)"
+                    title="Escuchar pronunciación"
+                    class="mt-3 flex items-center gap-1.5 self-center px-3 py-1.5 rounded-xl bg-[#F3F0EC] dark:bg-[#211E35] hover:bg-[#E8E4EF] dark:hover:bg-[#2A2640] active:scale-95 transition-all text-[#6B6480] dark:text-[#9590A8] text-xs font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728" />
+                    </svg>
+                    Escuchar
+                </button>
             </div>
 
             <!-- Back: Significado / Ejemplo / TipoPalabra -->
@@ -196,6 +206,12 @@ else
     private void ToggleFlip()
     {
         if (!_isAnswering) isFlipped = !isFlipped;
+    }
+
+    private async Task SpeakCard(VocabularyEntry entry)
+    {
+        var text = !string.IsNullOrEmpty(entry.Kana) ? entry.Kana : entry.Romaji;
+        await JS.InvokeVoidAsync("ttsInterop.speak", text);
     }
 
     [JSInvokable]

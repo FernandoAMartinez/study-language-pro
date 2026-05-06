@@ -1,4 +1,5 @@
 @using study_language_pro.Models
+@inject IJSRuntime JS
 
 @{
     var tags = Entries.SelectMany(e => e.Tags).Distinct().OrderBy(t => t).ToList();
@@ -94,6 +95,15 @@ else if (_viewMode == "list")
                     }
                 </div>
                 <div class="flex gap-1.5 shrink-0 mt-0.5">
+                    <button @onclick="() => SpeakEntry(entry)"
+                        class="p-2 rounded-xl text-[#C5C0CE] dark:text-[#5A5470] hover:text-sky-500 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors"
+                        title="Escuchar pronunciación">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728" />
+                        </svg>
+                    </button>
                     <button @onclick="() => OnEdit.InvokeAsync(entry)"
                         class="p-2 rounded-xl text-[#C5C0CE] dark:text-[#5A5470] hover:text-[#E8402A] dark:hover:text-[#FF6B54] hover:bg-[#E8402A]/8 dark:hover:bg-[#E8402A]/12 transition-colors"
                         title="Editar">
@@ -157,6 +167,15 @@ else
                         }
                     </div>
                     <div class="flex gap-1 shrink-0 ml-auto">
+                        <button @onclick="() => SpeakEntry(entry)"
+                            class="p-1.5 rounded-lg text-[#C5C0CE] dark:text-[#5A5470] hover:text-sky-500 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors"
+                            title="Escuchar pronunciación">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728" />
+                            </svg>
+                        </button>
                         <button @onclick="() => OnEdit.InvokeAsync(entry)"
                             class="p-1.5 rounded-lg text-[#C5C0CE] dark:text-[#5A5470] hover:text-[#E8402A] dark:hover:text-[#FF6B54] hover:bg-[#E8402A]/8 dark:hover:bg-[#E8402A]/12 transition-colors"
                             title="Editar">
@@ -189,5 +208,11 @@ else
     private void OnTagFilterChange(ChangeEventArgs e)
     {
         _selectedTag = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private async Task SpeakEntry(VocabularyEntry entry)
+    {
+        var text = !string.IsNullOrEmpty(entry.Kana) ? entry.Kana : entry.Romaji;
+        await JS.InvokeVoidAsync("ttsInterop.speak", text);
     }
 }

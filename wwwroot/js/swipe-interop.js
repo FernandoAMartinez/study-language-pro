@@ -75,3 +75,14 @@ window.swipeInterop = (function () {
 
     return { attachSwipe, detachSwipe };
 })();
+
+window.ttsInterop = {
+    speak: function (text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    }
+};
