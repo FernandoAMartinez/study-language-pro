@@ -2,58 +2,45 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<div class="flex min-h-dvh bg-[#F9F7F4] dark:bg-[#0F0E1C] transition-colors duration-200">
+<div class="flex min-h-dvh bg-[#f4efe6] dark:bg-[#0e0c08] transition-colors duration-200">
 
-    <!-- ── Desktop sidebar ─────────────────────────────────────────────────── -->
-    <aside class="hidden md:flex md:flex-col md:w-64 bg-[#1B1930] shrink-0 min-h-screen">
+    <!-- ── Desktop sidebar — light paper ──────────────────────────────────── -->
+    <aside class="hidden md:flex md:flex-col md:w-[220px] bg-[#f4efe6] dark:bg-[#0e0c08] shrink-0 min-h-screen border-r border-[rgba(26,22,18,0.10)] dark:border-white/5">
 
         <!-- Brand -->
-        <div class="px-5 py-5 border-b border-white/5">
+        <div class="px-6 py-7 border-b border-[rgba(26,22,18,0.08)] dark:border-white/5">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-[#E8402A] flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(232,64,42,0.45)]">
-                    <span class="text-white font-bold text-lg leading-none" style="font-family:'Noto Serif JP',serif">日</span>
+                <div class="w-8 h-8 bg-[#b34234] flex items-center justify-center shrink-0">
+                    <span class="text-[#f4efe6] font-bold text-lg leading-none" style="font-family:'Noto Serif JP',serif">学</span>
                 </div>
                 <div>
-                    <p class="text-white font-bold text-sm leading-tight tracking-tight">Nihongo Study</p>
-                    <p class="text-white/35 text-[11px] mt-0.5 tracking-wide">日本語を学ぼう</p>
+                    <p class="text-[#1a1612] dark:text-[#ede9f5] font-medium text-base leading-tight" style="font-family:'Cormorant Garamond',serif;font-style:italic">Nihongo</p>
+                    <p class="text-[#8c8378] dark:text-[#6a6480] text-[9px] tracking-[0.18em] uppercase mt-0.5" style="font-family:'JetBrains Mono',monospace">diario</p>
                 </div>
             </div>
+        </div>
+
+        <!-- Section label -->
+        <div class="px-6 pt-6 pb-2">
+            <p class="text-[#8c8378] dark:text-[#6a6480] text-[9px] tracking-[0.18em] uppercase" style="font-family:'JetBrains Mono',monospace">Estudiar</p>
         </div>
 
         <!-- Nav links -->
         <NavMenu />
 
-        <!-- Desktop install button (shows when browser supports PWA install) -->
-        @if (_canInstall)
-        {
-            <div class="px-4 pb-2">
-                <button @onclick="InstallApp"
-                    class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/6 transition-all text-sm font-medium group">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 group-hover:text-[#E8402A] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span>Instalar app</span>
-                </button>
-            </div>
-        }
-
         <!-- Dark mode toggle -->
-        <div class="px-4 pb-6 @(_canInstall ? "" : "mt-auto")">
+        <div class="px-4 pb-6 mt-auto border-t border-[rgba(26,22,18,0.06)] dark:border-white/5 pt-4">
             <button @onclick="ToggleTheme"
-                class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-white/38 hover:text-white/75 hover:bg-white/5 transition-all text-sm font-medium">
+                class="flex items-center gap-2 w-full px-2 py-2 text-[#8c8378] dark:text-[#6a6480] hover:text-[#5a5048] dark:hover:text-[#9590A8] transition-colors text-xs">
                 @if (_isDark)
                 {
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Modo claro</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em">MODO CLARO</span>
                 }
                 else
                 {
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                    <span>Modo oscuro</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em">MODO OSCURO</span>
                 }
             </button>
         </div>
@@ -63,92 +50,49 @@
     <div class="flex flex-col flex-1 min-w-0">
 
         <!-- Mobile top header -->
-        <header class="md:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#1B1930] shadow-[0_1px_0_rgba(255,255,255,0.05)]">
+        <header class="md:hidden sticky top-0 z-40 flex items-center justify-between px-5 py-3.5 bg-[#f4efe6] dark:bg-[#0e0c08] border-b border-[rgba(26,22,18,0.10)] dark:border-white/5">
             <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-[#E8402A] flex items-center justify-center shrink-0">
-                    <span class="text-white font-bold text-sm" style="font-family:'Noto Serif JP',serif">日</span>
+                <div class="w-6 h-6 bg-[#b34234] flex items-center justify-center shrink-0">
+                    <span class="text-[#f4efe6] font-bold text-xs" style="font-family:'Noto Serif JP',serif">学</span>
                 </div>
-                <span class="text-white font-bold text-sm tracking-tight">Nihongo Study</span>
+                <span class="text-[#1a1612] dark:text-[#ede9f5] font-medium text-sm" style="font-family:'Cormorant Garamond',serif;font-style:italic">nihongo.diario</span>
             </div>
             <button @onclick="ToggleTheme"
-                class="p-2 -mr-1 rounded-lg text-white/50 hover:text-white/85 hover:bg-white/8 transition-all">
+                class="p-1.5 text-[#8c8378] hover:text-[#5a5048] transition-colors">
                 @if (_isDark)
                 {
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 }
                 else
                 {
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                 }
             </button>
         </header>
 
-        <!-- Page content — bottom padding accounts for nav + optional install banner -->
-        <main class="flex-1 px-4 pt-5 pb-28 @(_canInstall ? "pb-44" : "") md:px-8 md:py-8" style="transition:padding-bottom 200ms ease-out">
+        <!-- Page content -->
+        <main class="flex-1 px-5 pt-6 pb-28 md:px-10 md:py-8">
             @Body
         </main>
     </div>
 
-    <!-- ── Mobile install banner (above bottom nav) ──────────────────────────── -->
-    <!-- Always in DOM — transform hides it below the nav rather than removing the node.
-         DOM insertion/removal of fixed elements triggers a visible repaint that looks like
-         the bottom bar "reappearing from below", so we avoid it with a CSS-only approach. -->
-    <div class="fixed md:hidden z-40 inset-x-0 bg-[#1B1930] border-t border-white/8 px-4 py-3 flex items-center gap-3"
-         style="bottom: calc(56px + env(safe-area-inset-bottom, 0px)); transition: transform 260ms ease-out; transform: translateY(@(_canInstall ? "0" : "calc(100% + 1px)"))">
-        <div class="w-9 h-9 rounded-xl bg-[#E8402A] flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(232,64,42,0.40)]">
-            <span class="text-white font-bold text-base leading-none" style="font-family:'Noto Serif JP',serif">日</span>
-        </div>
-        <div class="flex-1 min-w-0">
-            <p class="text-white text-xs font-bold leading-tight">Instalar la app</p>
-            <p class="text-white/45 text-[11px] mt-0.5 truncate">Acceso rápido y uso sin conexión</p>
-        </div>
-        <button @onclick="InstallApp"
-            class="shrink-0 bg-[#E8402A] hover:bg-[#d03320] active:bg-[#bc2d1c] text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors shadow-[0_2px_8px_rgba(232,64,42,0.35)]">
-            Instalar
-        </button>
-        <button @onclick="DismissInstall"
-            class="shrink-0 p-1.5 text-white/35 hover:text-white/65 transition-colors"
-            aria-label="Cerrar">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
-    </div>
-
-    <!-- ── Mobile bottom navigation ─────────────────────────────────────────── -->
-    <nav class="fixed bottom-0 inset-x-0 md:hidden bg-[#1B1930] border-t border-white/5 flex justify-around items-center z-50"
-         style="height: calc(56px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px)">
+    <!-- ── Mobile bottom navigation — paperDeep ──────────────────────────── -->
+    <nav class="fixed bottom-0 inset-x-0 md:hidden bg-[#ebe4d6] dark:bg-[#0e0c08] border-t border-[rgba(26,22,18,0.10)] dark:border-white/5 flex justify-around items-center z-50"
+         style="height: calc(58px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px)">
 
         <NavLink href="" Match="NavLinkMatch.All" class="mobile-nav-link" ActiveClass="mobile-nav-active">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0118 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-            </svg>
-            <span>Vocab</span>
+            <span class="nav-kanji text-[22px] leading-none" style="font-family:'Noto Serif JP',serif">語</span>
+            <span>Léxico</span>
         </NavLink>
 
         <NavLink href="flashcards" class="mobile-nav-link" ActiveClass="mobile-nav-active">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+            <span class="nav-kanji text-[22px] leading-none" style="font-family:'Noto Serif JP',serif">札</span>
             <span>Tarjetas</span>
         </NavLink>
 
         <NavLink href="stats" class="mobile-nav-link" ActiveClass="mobile-nav-active">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span>Progreso</span>
-        </NavLink>
-
-        <NavLink href="ejercicios" class="mobile-nav-link" ActiveClass="mobile-nav-active">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.586-6.586a2 2 0 012.828 2.828L11.828 13.828A2 2 0 0110 14.414l-2.414.586.586-2.414A2 2 0 019 11z" />
-            </svg>
-            <span>Ejercicios</span>
+            <span class="nav-kanji text-[22px] leading-none" style="font-family:'Noto Serif JP',serif">統</span>
+            <span>Stats</span>
         </NavLink>
 
     </nav>
@@ -156,7 +100,6 @@
 
 @code {
     private bool _isDark;
-    private bool _canInstall;
     private DotNetObjectReference<MainLayout>? _selfRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -177,29 +120,10 @@
     }
 
     [JSInvokable]
-    public void OnInstallAvailable()
-    {
-        _canInstall = true;
-        StateHasChanged();
-    }
+    public void OnInstallAvailable() => StateHasChanged();
 
     [JSInvokable]
-    public void OnAppInstalled()
-    {
-        _canInstall = false;
-        StateHasChanged();
-    }
-
-    private async Task InstallApp()
-    {
-        var accepted = await JS.InvokeAsync<bool>("pwaInstall.prompt");
-        if (accepted) _canInstall = false;
-    }
-
-    private void DismissInstall()
-    {
-        _canInstall = false;
-    }
+    public void OnAppInstalled() => StateHasChanged();
 
     public async ValueTask DisposeAsync()
     {

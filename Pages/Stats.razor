@@ -3,269 +3,220 @@
 @inject ILocalStorageService Storage
 @inject IJSRuntime JS
 
-<PageTitle>Progreso — Nihongo Study</PageTitle>
+<PageTitle>Estadísticas — nihongo.diario</PageTitle>
 
 <div class="max-w-3xl mx-auto">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5] tracking-tight">Progreso</h1>
-        <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-0.5">統計</p>
+    <!-- Header -->
+    <div class="flex items-end justify-between mb-0 pb-5 border-b border-[rgba(26,22,18,0.12)] dark:border-white/8">
+        <div>
+            <p class="text-[#8c8378] dark:text-[#6a6480] text-[10px] tracking-[0.18em] uppercase mb-2" style="font-family:'JetBrains Mono',monospace">統計 · estadísticas</p>
+            <h1 class="text-[#1a1612] dark:text-[#ede9f5] leading-none" style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:42px;font-weight:400">
+                Tu progreso
+            </h1>
+        </div>
+        <!-- Time filter -->
+        <div class="flex gap-1 mb-1">
+            @foreach (var (label, value) in new[] { ("7d", 7), ("30d", 30), ("12s", 84), ("todo", 0) })
+            {
+                var v = value;
+                <button @onclick="() => _dayFilter = v"
+                    class="px-2.5 py-1 text-[10px] border transition-colors @(_dayFilter == v ? "bg-[#1a1612] dark:bg-[#ede9f5] border-[#1a1612] dark:border-[#ede9f5] text-[#f4efe6] dark:text-[#1a1612]" : "border-[rgba(26,22,18,0.18)] dark:border-white/15 text-[#5a5048] dark:text-[#9590A8] hover:border-[rgba(26,22,18,0.35)]")"
+                    style="font-family:'JetBrains Mono',monospace;letter-spacing:0.1em">
+                    @label
+                </button>
+            }
+        </div>
     </div>
 
     @if (_loading)
     {
-        <div class="text-center py-12 text-[#B5B0BE] dark:text-[#6A6480] text-sm font-medium">Cargando…</div>
+        <div class="text-center py-16 text-[#8c8378] dark:text-[#6a6480] text-sm" style="font-family:'JetBrains Mono',monospace">cargando…</div>
     }
-    else if (!_sessions.Any())
+    else if (!_allSessions.Any())
     {
-        <div class="bg-white dark:bg-[#19182A] rounded-3xl shadow-[0_4px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_32px_rgba(0,0,0,0.45)] p-10 text-center">
-            <div class="w-16 h-16 bg-[#F3F0EC] dark:bg-[#211E35] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span class="text-3xl">📊</span>
-            </div>
-            <p class="text-sm font-semibold text-[#1A1523] dark:text-[#EDE9F5] mb-2">Sin sesiones aún</p>
-            <p class="text-sm text-[#6B6480] dark:text-[#9590A8] max-w-xs mx-auto mb-6">
-                Completá una práctica de tarjetas para ver tus estadísticas aquí.
-            </p>
-            <a href="flashcards"
-                class="inline-block bg-[#E8402A] hover:bg-[#d03320] text-white font-bold py-3 px-6 rounded-2xl transition-colors text-sm shadow-[0_2px_12px_rgba(232,64,42,0.30)]">
-                Ir a Tarjetas
+        <div class="py-16 text-center border-b border-[rgba(26,22,18,0.06)] dark:border-white/5">
+            <p class="text-[#8c8378] dark:text-[#6a6480] text-sm mb-4" style="font-family:'JetBrains Mono',monospace">sin sesiones aún</p>
+            <a href="flashcards" class="text-xs border border-[rgba(26,22,18,0.18)] dark:border-white/15 px-4 py-2 text-[#5a5048] dark:text-[#9590A8] hover:bg-[rgba(26,22,18,0.05)] dark:hover:bg-white/5 transition-colors" style="font-family:'JetBrains Mono',monospace;letter-spacing:0.06em">
+                ir a tarjetas →
             </a>
         </div>
     }
     else
     {
-        <!-- KPI cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 text-center">
-                <p class="text-3xl font-bold text-[#E8402A] dark:text-[#FF6B54]">@_sessions.Count</p>
-                <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-1 font-medium">Sesiones</p>
-            </div>
-            <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 text-center">
-                <p class="text-3xl font-bold text-[#E8402A] dark:text-[#FF6B54]">@_totalPracticed</p>
-                <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-1 font-medium">Palabras</p>
-            </div>
-            <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 text-center">
-                <p class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">@_hitRate.ToString("F0")%</p>
-                <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-1 font-medium">Acierto</p>
-            </div>
-            <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 text-center">
-                <p class="text-3xl font-bold text-amber-600 dark:text-amber-400">@_streak</p>
-                <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-1 font-medium">Racha (días)</p>
-            </div>
+            var cutoff = _dayFilter == 0 ? DateTime.MinValue : DateTime.UtcNow.AddDays(-_dayFilter);
+            var sessions = _allSessions.Where(s => s.Date >= cutoff).ToList();
+            var totalPracticed = sessions.Sum(s => s.TotalCards);
+            var totalKnown = sessions.Sum(s => s.KnownCount);
+            var hitRate = totalPracticed > 0 ? totalKnown * 100.0 / totalPracticed : 0;
+            var streak = ComputeStreak(_allSessions);
+
+
+        <!-- KPIs — 2 cols mobile / 4 cols desktop, border-top separators -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mt-6 mb-8">
+            @foreach (var (val, sub, accent) in new (string, string, bool)[]
+            {
+                (totalPracticed.ToString(), "palabras", false),
+                ($"{streak}", "racha actual", true),
+                ($"{hitRate:F0}%", "precisión", false),
+                (sessions.Count.ToString(), "sesiones", false),
+            })
+            {
+                <div class="pt-3 border-t border-[#1a1612] dark:border-[#ede9f5]">
+                    <div class="flex items-baseline gap-1.5">
+                        <span class="leading-none @(accent ? "text-[#b34234]" : "text-[#1a1612] dark:text-[#ede9f5]")" style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500">@val</span>
+                        @if (accent && val != "0") { <span class="text-sm text-[#8c8378] italic" style="font-family:'Cormorant Garamond',serif">días</span> }
+                    </div>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase mt-1" style="font-family:'JetBrains Mono',monospace">@sub</p>
+                </div>
+            }
         </div>
 
-        <!-- Heatmap -->
-        <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 mb-6">
-            <h2 class="text-sm font-bold text-[#1A1523] dark:text-[#EDE9F5] mb-4 uppercase tracking-wide">Actividad de práctica</h2>
+        <!-- Heatmap — full width, responsive SVG -->
+        <div class="mb-6">
+            <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.16em] uppercase mb-3" style="font-family:'JetBrains Mono',monospace">Actividad — 12 semanas</p>
             @{
                 var hmToday = DateTime.UtcNow.Date;
-                var hmStart = hmToday.AddDays(-300);
+                var hmWeeks = 20;
+                var hmStart = hmToday.AddDays(-(hmWeeks * 7 - 1));
                 hmStart = hmStart.AddDays(-(int)hmStart.DayOfWeek);
-                var hmTotalDays = (hmToday - hmStart).Days + 1;
-                var hmWeeks = (int)Math.Ceiling(hmTotalDays / 7.0);
-                int hmCell = 12;
-                int hmStride = 14;
-                int hmLeft = 28;
-                int hmTop = 20;
+                int hmCell = 14; int hmGap = 3;
+                int hmStride = hmCell + hmGap;
+                int hmLeft = 18; int hmTop = 16;
                 var hmSvgW = hmLeft + hmWeeks * hmStride;
                 var hmSvgH = hmTop + 7 * hmStride;
-                var hmMonthNames = new[] { "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic" };
-                var hmMonthLabels = new List<(int W, string Label)>();
-                int hmPrevMonth = -1;
-                for (int hmW = 0; hmW < hmWeeks; hmW++)
-                {
-                    var hmWDate = hmStart.AddDays(hmW * 7);
-                    if (hmWDate.Month != hmPrevMonth)
-                    {
-                        hmPrevMonth = hmWDate.Month;
-                        hmMonthLabels.Add((hmW, hmMonthNames[hmWDate.Month - 1]));
-                    }
-                }
             }
-            <div class="relative">
-                <div @onmousemove="OnHeatmapMouseMove" class="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                    <svg viewBox="0 0 @hmSvgW @hmSvgH" style="width:@(hmSvgW)px;height:@(hmSvgH)px" aria-label="Heatmap de actividad">
-                        @((MarkupString)$"<text x=\"{hmLeft - 4}\" y=\"{hmTop + 1 * hmStride + 9}\" text-anchor=\"end\" font-size=\"9\" fill=\"#9590A8\">Lun</text>")
-                        @((MarkupString)$"<text x=\"{hmLeft - 4}\" y=\"{hmTop + 3 * hmStride + 9}\" text-anchor=\"end\" font-size=\"9\" fill=\"#9590A8\">Mi&#233;</text>")
-                        @((MarkupString)$"<text x=\"{hmLeft - 4}\" y=\"{hmTop + 5 * hmStride + 9}\" text-anchor=\"end\" font-size=\"9\" fill=\"#9590A8\">Vie</text>")
-                        @foreach (var (mw, ml) in hmMonthLabels)
+            <div class="relative" @onmousemove="OnHeatmapMouseMove">
+                <svg viewBox="0 0 @hmSvgW @hmSvgH" style="width:100%;height:auto;display:block" preserveAspectRatio="xMinYMid meet">
+                    @{
+                        var hmLabelColor = _isDark ? "#6a6480" : "#8c8378";
+                    }
+                    @((MarkupString)$"<text x=\"{hmLeft - 2}\" y=\"{hmTop + 1 * hmStride + hmCell - 2}\" text-anchor=\"end\" font-size=\"7\" fill=\"{hmLabelColor}\" font-family=\"JetBrains Mono,monospace\">L</text>")
+                    @((MarkupString)$"<text x=\"{hmLeft - 2}\" y=\"{hmTop + 3 * hmStride + hmCell - 2}\" text-anchor=\"end\" font-size=\"7\" fill=\"{hmLabelColor}\" font-family=\"JetBrains Mono,monospace\">M</text>")
+                    @((MarkupString)$"<text x=\"{hmLeft - 2}\" y=\"{hmTop + 5 * hmStride + hmCell - 2}\" text-anchor=\"end\" font-size=\"7\" fill=\"{hmLabelColor}\" font-family=\"JetBrains Mono,monospace\">V</text>")
+                    @{
+                        var hmInk = _isDark ? "237,233,245" : "26,22,18";
+                    }
+                    @for (int w = 0; w < hmWeeks; w++)
+                    {
+                        for (int d = 0; d < 7; d++)
                         {
-                            @((MarkupString)$"<text x=\"{hmLeft + mw * hmStride}\" y=\"{hmTop - 6}\" font-size=\"9\" fill=\"#9590A8\">{ml}</text>")
+                            var hmDate = hmStart.AddDays(w * 7 + d);
+                            if (hmDate > hmToday) continue;
+                            activityMap.TryGetValue(hmDate, out var hmAct);
+                            var hmTotal = hmAct.TotalCards;
+                            var opacity = hmTotal == 0 ? 0.07 : hmTotal <= 5 ? 0.22 : hmTotal <= 15 ? 0.45 : hmTotal <= 30 ? 0.68 : 0.92;
+                            var hmCx = hmLeft + w * hmStride;
+                            var hmCy = hmTop + d * hmStride;
+                            var capturedDate = hmDate;
+                            var capturedTotal = hmTotal;
+                            <rect x="@hmCx" y="@hmCy" width="@hmCell" height="@hmCell"
+                                  style="fill:rgba(@hmInk,@opacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));cursor:default"
+                                  @onmouseover="() => OnCellHover(capturedDate, capturedTotal)"
+                                  @onmouseout="OnCellLeave" />
                         }
-                        @for (int w = 0; w < hmWeeks; w++)
-                        {
-                            for (int d = 0; d < 7; d++)
-                            {
-                                var hmDate = hmStart.AddDays(w * 7 + d);
-                                if (hmDate > hmToday) { continue; }
-                                activityMap.TryGetValue(hmDate, out var hmAct);
-                                var hmTotal = hmAct.TotalCards;
-                                var hmCls = GetCellClass(GetIntensityLevel(hmTotal));
-                                var hmCx = hmLeft + w * hmStride;
-                                var hmCy = hmTop + d * hmStride;
-                                var capturedDate = hmDate;
-                                var capturedTotal = hmTotal;
-                                <rect x="@hmCx" y="@hmCy" width="@hmCell" height="@hmCell" rx="2"
-                                      class="@hmCls cursor-default"
-                                      @onmouseover="() => OnCellHover(capturedDate, capturedTotal)"
-                                      @onmouseout="OnCellLeave" />
-                            }
-                        }
-                    </svg>
-                </div>
+                    }
+                </svg>
                 @if (hoveredCell is not null)
                 {
-                    <div class="absolute bg-[#1B1930] text-white text-xs rounded-xl px-3 py-1.5 pointer-events-none whitespace-nowrap z-10 shadow-lg font-medium"
-                         style="left:@(mouseX + 8)px;top:@(mouseY - 40)px">
+                    <div class="absolute bg-[#1a1612] text-[#f4efe6] text-[10px] px-3 py-1.5 pointer-events-none whitespace-nowrap z-10" style="left:@(mouseX + 8)px;top:@(mouseY - 36)px;font-family:'JetBrains Mono',monospace">
                         @hoveredCell.Value.Label
                     </div>
                 }
             </div>
-            <div class="flex items-center gap-1.5 mt-3 text-xs text-[#9590A8] font-medium">
-                <span>Menos</span>
-                @for (int lvl = 0; lvl < 5; lvl++)
-                {
-                    <svg width="12" height="12" viewBox="0 0 12 12"><rect width="12" height="12" rx="2" class="@GetCellClass(lvl)" /></svg>
-                }
-                <span>Más</span>
-            </div>
         </div>
 
-        <!-- Progress chart -->
-        <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 mb-6">
-            <h2 class="text-sm font-bold text-[#1A1523] dark:text-[#EDE9F5] mb-3 uppercase tracking-wide">Progreso por sesión</h2>
+        <!-- Chart — full width -->
+        <div class="mb-6">
+            <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.16em] uppercase mb-3" style="font-family:'JetBrains Mono',monospace">Precisión por sesión</p>
             @((MarkupString)_chartSvg)
-            <div class="flex items-center gap-4 mt-2 text-xs text-[#9590A8] justify-end flex-wrap font-medium">
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>≥ 80%</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>50–79%</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-400 inline-block"></span>&lt; 50%</span>
-                <span class="text-[#B5B0BE] dark:text-[#6A6480]">Últimas @_chartSessionCount sesiones</span>
-            </div>
         </div>
 
-        <!-- Session history table -->
-        <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] overflow-hidden mb-6">
-            <div class="px-5 py-4 border-b border-[#F3F0EC] dark:border-white/5">
-                <h2 class="text-sm font-bold text-[#1A1523] dark:text-[#EDE9F5] uppercase tracking-wide">Historial de sesiones</h2>
+        <!-- Hard words -->
+        @if (_top5.Any())
+        {
+            <div class="border-t border-[rgba(26,22,18,0.12)] dark:border-white/8 pt-5 mb-6">
+                <div class="flex justify-between items-baseline mb-4">
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.16em] uppercase" style="font-family:'JetBrains Mono',monospace">palabras que se te resisten</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-0">
+                    @{int rank = 0;}
+                    @foreach (var (wordId, count) in _top5.Take(3))
+                    {
+                        _wordMap.TryGetValue(wordId, out var entry);
+                        <div class="flex justify-between items-center py-3 @(rank < 2 ? "border-b md:border-b-0 md:border-r" : "") border-[rgba(26,22,18,0.06)] dark:border-white/5 @(rank > 0 ? "md:px-5" : "md:pr-5")">
+                            <div>
+                                @if (entry is not null && !string.IsNullOrEmpty(entry.Kanji))
+                                {
+                                    <p class="text-lg font-medium text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Noto Serif JP',serif">@entry.Kanji</p>
+                                }
+                                <p class="text-sm italic text-[#5a5048] dark:text-[#9590A8]" style="font-family:'Cormorant Garamond',serif">@(entry?.Significado ?? wordId)</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl text-[#b34234] leading-none" style="font-family:'Cormorant Garamond',serif;font-weight:500">@count</p>
+                                <p class="text-[8px] text-[#8c8378] tracking-[0.12em] uppercase mt-0.5" style="font-family:'JetBrains Mono',monospace">fallos</p>
+                            </div>
+                        </div>
+                        rank++;
+                    }
+                </div>
             </div>
+        }
+
+        <!-- Session history -->
+        <div class="border-t border-[rgba(26,22,18,0.12)] dark:border-white/8 pt-5">
+            <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.16em] uppercase mb-4" style="font-family:'JetBrains Mono',monospace">Historial de sesiones</p>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm min-w-120">
-                    <thead class="bg-[#F9F7F4] dark:bg-[#211E35] text-[#9590A8] text-xs uppercase tracking-wide">
-                        <tr>
-                            <th class="text-left px-5 py-3 font-bold">Fecha</th>
-                            <th class="text-right px-5 py-3 font-bold">Total</th>
-                            <th class="text-right px-5 py-3 font-bold text-emerald-600 dark:text-emerald-400">Lo sé</th>
-                            <th class="text-right px-5 py-3 font-bold text-amber-600 dark:text-amber-400">Repasar</th>
-                            <th class="text-right px-5 py-3 font-bold">Acierto</th>
+                <table class="w-full text-xs min-w-[480px]" style="font-family:'JetBrains Mono',monospace">
+                    <thead>
+                        <tr class="border-b border-[rgba(26,22,18,0.10)] dark:border-white/8">
+                            @foreach (var h in new[] { "Fecha", "Total", "Lo sé", "Difícil", "Fallé", "Acierto" })
+                            {
+                                <th class="text-left pb-2 text-[8px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.16em] uppercase font-normal @(h != "Fecha" ? "text-right" : "")">@h</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var s in _sessions.OrderByDescending(s => s.Date))
+                        @foreach (var s in sessions.OrderByDescending(s => s.Date).Take(15))
                         {
                             var rate = s.TotalCards > 0 ? s.KnownCount * 100.0 / s.TotalCards : 0;
-                            <tr class="border-t border-[#F3F0EC] dark:border-white/5 hover:bg-[#F9F7F4] dark:hover:bg-[#211E35]/50 transition-colors">
-                                <td class="px-5 py-3 text-[#6B6480] dark:text-[#9590A8] text-xs">@s.Date.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                                <td class="px-5 py-3 text-right font-bold text-[#1A1523] dark:text-[#EDE9F5]">@s.TotalCards</td>
-                                <td class="px-5 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400">@s.KnownCount</td>
-                                <td class="px-5 py-3 text-right font-medium text-amber-600 dark:text-amber-400">@s.ReviewCount</td>
-                                <td class="px-5 py-3 text-right font-bold @(rate >= 80 ? "text-emerald-600 dark:text-emerald-400" : rate >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-500 dark:text-red-400")">
-                                    @rate.ToString("F0")%
-                                </td>
+                            <tr class="border-b border-[rgba(26,22,18,0.05)] dark:border-white/5">
+                                <td class="py-2.5 text-[#8c8378] dark:text-[#6a6480] text-[10px]">@s.Date.ToLocalTime().ToString("dd/MM/yy HH:mm")</td>
+                                <td class="py-2.5 text-right text-[#1a1612] dark:text-[#ede9f5]">@s.TotalCards</td>
+                                <td class="py-2.5 text-right text-[#1a1612] dark:text-[#ede9f5]">@s.KnownCount</td>
+                                <td class="py-2.5 text-right text-[#8c8378] dark:text-[#6a6480]">@s.HardCount</td>
+                                <td class="py-2.5 text-right text-[#b34234]">@s.ReviewCount</td>
+                                <td class="py-2.5 text-right font-medium @(rate >= 80 ? "text-[#1a1612] dark:text-[#ede9f5]" : rate >= 50 ? "text-[#8c8378]" : "text-[#b34234]")">@rate.ToString("F0")%</td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <!-- Top 5 words to review -->
-        @if (_top5.Any())
-        {
-            <div class="bg-white dark:bg-[#19182A] rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.35)] p-5 mb-6">
-                <h2 class="text-sm font-bold text-[#1A1523] dark:text-[#EDE9F5] mb-4 uppercase tracking-wide">Top 5 para repasar</h2>
-                <ol class="space-y-3.5">
-                    @{int rank = 1;}
-                    @foreach (var (wordId, count) in _top5)
-                    {
-                        _wordMap.TryGetValue(wordId, out var entry);
-                        var primary = entry is not null
-                            ? entry.Romaji + (!string.IsNullOrEmpty(entry.Kanji) ? $" ({entry.Kanji})" : "")
-                            : wordId;
-                        var secondary = entry?.Significado ?? string.Empty;
-                        var maxCount = _top5[0].Count;
-                        var pct = maxCount > 0 ? count * 100.0 / maxCount : 0;
-                        <li class="flex items-center gap-3">
-                            <span class="w-5 text-xs font-bold text-[#B5B0BE] dark:text-[#5A5470] shrink-0 text-right">@rank.</span>
-                            <div class="flex-1">
-                                <div class="flex justify-between text-sm mb-0.5">
-                                    <span class="font-bold text-[#1A1523] dark:text-[#EDE9F5]">@primary</span>
-                                    <span class="text-[#9590A8] text-xs font-medium">@count ×</span>
-                                </div>
-                                @if (!string.IsNullOrEmpty(secondary))
-                                {
-                                    <p class="text-xs text-[#9590A8] mb-1.5 italic">@secondary</p>
-                                }
-                                <div class="h-1.5 bg-[#F3F0EC] dark:bg-[#211E35] rounded-full overflow-hidden">
-                                    <div class="h-full bg-amber-400 dark:bg-amber-500 rounded-full"
-                                        style="width: @pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%">
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        rank++;
-                    }
-                </ol>
-            </div>
-        }
     }
 </div>
 
 @code {
-    private List<StudySession> _sessions = [];
+    private List<StudySession> _allSessions = [];
     private Dictionary<string, VocabularyEntry> _wordMap = new();
     private List<(string Id, int Count)> _top5 = [];
-    private int _totalPracticed;
-    private double _hitRate;
-    private int _streak;
     private bool _loading = true;
     private bool _isDark;
     private string _chartSvg = string.Empty;
-    private int _chartSessionCount;
     private Dictionary<DateTime, (int TotalCards, int KnownCount)> activityMap = new();
     private (string Label, DateTime Date)? hoveredCell = null;
-    private int mouseX = 0;
-    private int mouseY = 0;
+    private int mouseX, mouseY;
+    private int _dayFilter = 30;
 
     protected override async Task OnInitializedAsync()
     {
-        _sessions = await Storage.GetItemAsync<List<StudySession>>("study_sessions") ?? [];
+        _allSessions = await Storage.GetItemAsync<List<StudySession>>("study_sessions") ?? [];
         var entries = await Storage.GetItemAsync<List<VocabularyEntry>>("vocabulary_entries") ?? [];
-
         _wordMap = entries.ToDictionary(e => e.Id.ToString(), e => e);
-
-        _totalPracticed = _sessions.Sum(s => s.TotalCards);
-        var totalKnown = _sessions.Sum(s => s.KnownCount);
-        _hitRate = _totalPracticed > 0 ? totalKnown * 100.0 / _totalPracticed : 0;
-        _streak = ComputeStreak(_sessions);
-
-        _top5 = _sessions
-            .SelectMany(s => s.ReviewedWordIds)
-            .GroupBy(id => id)
-            .Select(g => (Id: g.Key, Count: g.Count()))
-            .OrderByDescending(x => x.Count)
-            .Take(5)
-            .ToList();
-
-        _chartSessionCount = Math.Min(_sessions.Count, 20);
-
-        var hmActivityStart = DateTime.UtcNow.Date.AddDays(-363);
-        activityMap = _sessions
-            .Where(s => s.Date.Date >= hmActivityStart)
-            .GroupBy(s => s.Date.Date)
-            .ToDictionary(
-                g => g.Key,
-                g => (TotalCards: g.Sum(s => s.TotalCards), KnownCount: g.Sum(s => s.KnownCount))
-            );
-
+        _top5 = _allSessions.SelectMany(s => s.ReviewedWordIds).GroupBy(id => id)
+            .Select(g => (Id: g.Key, Count: g.Count())).OrderByDescending(x => x.Count).Take(5).ToList();
+        var hmStart = DateTime.UtcNow.Date.AddDays(-363);
+        activityMap = _allSessions.Where(s => s.Date.Date >= hmStart).GroupBy(s => s.Date.Date)
+            .ToDictionary(g => g.Key, g => (TotalCards: g.Sum(s => s.TotalCards), KnownCount: g.Sum(s => s.KnownCount)));
         _loading = false;
     }
 
@@ -274,65 +225,45 @@
         if (firstRender)
         {
             _isDark = await JS.InvokeAsync<bool>("themeManager.isDark");
-            _chartSvg = BuildChartSvg(_sessions, _isDark);
+            _chartSvg = BuildChartSvg(_allSessions, _isDark);
             StateHasChanged();
         }
     }
 
-    private static string BuildChartSvg(List<StudySession> sessions, bool isDark = false)
+    private static string BuildChartSvg(List<StudySession> sessions, bool isDark)
     {
         var ic = System.Globalization.CultureInfo.InvariantCulture;
-        var chartSessions = sessions.OrderBy(s => s.Date).TakeLast(20).ToList();
-        var cW = 500.0; var cH = 140.0; var cX0 = 44.0; var cY0 = 14.0;
-
-        var pts = chartSessions.Select((s, i) =>
+        var cs = sessions.OrderBy(s => s.Date).TakeLast(20).ToList();
+        var cW = 460.0; var cH = 120.0; var cX0 = 0.0; var cY0 = 10.0;
+        var gridColor = isDark ? "rgba(237,233,245,0.06)" : "rgba(26,22,18,0.06)";
+        var labelColor = isDark ? "#6a6480" : "#8c8378";
+        var lineColor = isDark ? "rgba(237,233,245,0.5)" : "rgba(26,22,18,0.5)";
+        var pts = cs.Select((s, i) =>
         {
             var r = s.TotalCards > 0 ? s.KnownCount * 100.0 / s.TotalCards : 0;
-            var x = chartSessions.Count == 1 ? cX0 + cW / 2 : cX0 + i * cW / (chartSessions.Count - 1);
+            var x = cs.Count == 1 ? cX0 + cW / 2 : cX0 + i * cW / (cs.Count - 1);
             var y = cY0 + cH - r / 100.0 * cH;
             return (x, y, r);
         }).ToList();
-
-        var gridColor = isDark ? "rgba(255,255,255,0.07)" : "#f1f0f4";
-        var labelColor = isDark ? "#6a6480" : "#b5b0be";
-        var lineColor = isDark ? "#ff6b54" : "#E8402A";
-        var areaColor = isDark ? "#ff6b54" : "#E8402A";
-
         var sb = new System.Text.StringBuilder();
-        sb.Append("<svg viewBox='0 0 560 168' style='width:100%;height:168px' aria-hidden='true'>");
-        sb.Append($"<defs><linearGradient id='pgGrad' x1='0' y1='0' x2='0' y2='1'>");
-        sb.Append($"<stop offset='0%' stop-color='{areaColor}'/>");
-        sb.Append($"<stop offset='100%' stop-color='{areaColor}' stop-opacity='0'/>");
-        sb.Append("</linearGradient></defs>");
-
-        foreach (var pct in new[] { 0, 25, 50, 75, 100 })
+        sb.Append($"<svg viewBox='0 0 {(cX0+cW+16).ToString("F0",ic)} {(cY0+cH+8).ToString("F0",ic)}' style='width:100%;height:140px' aria-hidden='true'>");
+        foreach (var pct in new[] { 0, 50, 100 })
         {
             var gy = (cY0 + cH - pct / 100.0 * cH).ToString("F1", ic);
-            sb.Append($"<line x1='44' y1='{gy}' x2='544' y2='{gy}' stroke='{gridColor}' stroke-width='1'/>");
-            sb.Append($"<text x='40' y='{(double.Parse(gy, ic) + 4).ToString("F1", ic)}' text-anchor='end' font-size='10' fill='{labelColor}'>{pct}%</text>");
+            sb.Append($"<line x1='{cX0.ToString("F0",ic)}' y1='{gy}' x2='{(cX0+cW).ToString("F0",ic)}' y2='{gy}' stroke='{gridColor}' stroke-width='1'/>");
+            sb.Append($"<text x='{(cX0+cW+4).ToString("F0",ic)}' y='{(double.Parse(gy,ic)+3).ToString("F1",ic)}' font-size='8' fill='{labelColor}' font-family='JetBrains Mono,monospace'>{pct}%</text>");
         }
-
-        var tyStr = (cY0 + cH - 0.80 * cH).ToString("F1", ic);
-        var tyLabel = (cY0 + cH - 0.80 * cH + 4).ToString("F1", ic);
-        sb.Append($"<line x1='44' y1='{tyStr}' x2='544' y2='{tyStr}' stroke='{lineColor}' stroke-width='1' stroke-dasharray='4 3' opacity='0.30'/>");
-        sb.Append($"<text x='548' y='{tyLabel}' font-size='9' fill='{lineColor}' opacity='0.45'>meta</text>");
-
         if (pts.Count > 1)
         {
             var line = string.Join(" ", pts.Select(p => p.x.ToString("F1", ic) + "," + p.y.ToString("F1", ic)));
-            var area = line
-                + " " + pts.Last().x.ToString("F1", ic) + "," + (cY0 + cH).ToString("F1", ic)
-                + " " + pts.First().x.ToString("F1", ic) + "," + (cY0 + cH).ToString("F1", ic);
-            sb.Append($"<polygon points='{area}' fill='url(#pgGrad)' opacity='0.12'/>");
-            sb.Append($"<polyline points='{line}' fill='none' stroke='{lineColor}' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/>");
+            sb.Append($"<polyline points='{line}' fill='none' stroke='{lineColor}' stroke-width='1.5' stroke-linejoin='round' stroke-linecap='round'/>");
         }
-
         foreach (var (x, y, r) in pts)
         {
-            var color = r >= 80 ? "#22c55e" : r >= 50 ? "#f59e0b" : "#ef4444";
-            sb.Append($"<circle cx='{x.ToString("F1", ic)}' cy='{y.ToString("F1", ic)}' r='4.5' fill='{color}' stroke='{(isDark ? "#19182A" : "white")}' stroke-width='2'/>");
+            var fill = r >= 80 ? "#1a1612" : r >= 50 ? "#8c8378" : "#b34234";
+            if (isDark) fill = r >= 80 ? "#ede9f5" : r >= 50 ? "#8c8378" : "#b34234";
+            sb.Append($"<circle cx='{x.ToString("F1",ic)}' cy='{y.ToString("F1",ic)}' r='3' fill='{fill}'/>");
         }
-
         sb.Append("</svg>");
         return sb.ToString();
     }
@@ -340,59 +271,23 @@
     private static int ComputeStreak(List<StudySession> sessions)
     {
         if (!sessions.Any()) return 0;
-
-        var days = sessions
-            .Select(s => s.Date.ToLocalTime().Date)
-            .Distinct()
-            .OrderByDescending(d => d)
-            .ToList();
-
+        var days = sessions.Select(s => s.Date.ToLocalTime().Date).Distinct().OrderByDescending(d => d).ToList();
         var today = DateTime.Today;
         if (days[0] < today.AddDays(-1)) return 0;
-
         int streak = 1;
         for (int i = 1; i < days.Count; i++)
         {
-            if ((days[i - 1] - days[i]).Days == 1)
-                streak++;
-            else
-                break;
+            if ((days[i - 1] - days[i]).Days == 1) streak++;
+            else break;
         }
         return streak;
     }
 
-    // ── Heatmap helpers ─────────────────────────────────────────────────────
-
     private void OnCellHover(DateTime date, int total)
     {
         if (total == 0) return;
-        var label = $"{total} palabra{(total == 1 ? "" : "s")} · {date:dd MMM yyyy}";
-        hoveredCell = (label, date);
+        hoveredCell = ($"{total} repaso{(total == 1 ? "" : "s")} · {date:dd MMM yy}", date);
     }
-
     private void OnCellLeave() => hoveredCell = null;
-
-    private void OnHeatmapMouseMove(MouseEventArgs e)
-    {
-        mouseX = (int)e.OffsetX;
-        mouseY = (int)e.OffsetY;
-    }
-
-    private static int GetIntensityLevel(int totalCards) => totalCards switch
-    {
-        0    => 0,
-        <= 5  => 1,
-        <= 15 => 2,
-        <= 30 => 3,
-        _    => 4
-    };
-
-    private static string GetCellClass(int level) => level switch
-    {
-        0 => "fill-[#F3F0EC] dark:fill-[#211E35]",
-        1 => "fill-emerald-200 dark:fill-emerald-900",
-        2 => "fill-emerald-300 dark:fill-emerald-700",
-        3 => "fill-emerald-400 dark:fill-emerald-500",
-        _ => "fill-emerald-500 dark:fill-emerald-400"
-    };
+    private void OnHeatmapMouseMove(MouseEventArgs e) { mouseX = (int)e.OffsetX; mouseY = (int)e.OffsetY; }
 }

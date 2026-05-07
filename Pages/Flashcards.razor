@@ -1,21 +1,23 @@
 @page "/flashcards"
 @inject ILocalStorageService Storage
 
-<PageTitle>Tarjetas — Nihongo Study</PageTitle>
+<PageTitle>Tarjetas — nihongo.diario</PageTitle>
 
 <div class="max-w-2xl mx-auto">
-    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-0 pb-5 border-b border-[rgba(26,22,18,0.12)] dark:border-white/8">
         <div>
-            <h1 class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5] tracking-tight">Tarjetas</h1>
-            <p class="text-xs text-[#6B6480] dark:text-[#9590A8] mt-0.5">フラッシュカード</p>
+            <p class="text-[#8c8378] dark:text-[#6a6480] text-[10px] tracking-[0.18em] uppercase mb-2" style="font-family:'JetBrains Mono',monospace">カード · tarjetas</p>
+            <h1 class="text-[#1a1612] dark:text-[#ede9f5] leading-none" style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(32px,8vw,42px);font-weight:400">
+                Sesión de estudio
+            </h1>
         </div>
 
         @if (_allTags.Any())
         {
-            <div class="flex items-center gap-2">
-                <label class="text-xs text-[#6B6480] dark:text-[#9590A8] font-bold uppercase tracking-wide shrink-0">Etiqueta:</label>
+            <div class="flex items-center gap-2 md:mb-1">
+                <label class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase shrink-0" style="font-family:'JetBrains Mono',monospace">Mazo</label>
                 <select @onchange="TagFilterChanged"
-                    class="text-sm border border-[#E5E2EC] dark:border-white/10 rounded-xl px-3 py-1.5 text-[#1A1523] dark:text-[#EDE9F5] focus:outline-none focus:ring-2 focus:ring-[#E8402A]/30 bg-white dark:bg-[#211E35] font-medium">
+                    class="flex-1 md:flex-none text-xs border border-[rgba(26,22,18,0.18)] dark:border-white/10 px-2.5 py-1.5 text-[#1a1612] dark:text-[#ede9f5] focus:outline-none bg-transparent min-w-0" style="font-family:'JetBrains Mono',monospace;letter-spacing:0.04em">
                     <option value="">Todas (@_allEntries.Count)</option>
                     @foreach (var tag in _allTags)
                     {
@@ -27,14 +29,16 @@
         }
     </div>
 
-    @if (_loading)
-    {
-        <div class="text-center py-12 text-[#B5B0BE] dark:text-[#6A6480] text-sm font-medium">Cargando…</div>
-    }
-    else
-    {
-        <FlashcardSession Cards="_filteredEntries" />
-    }
+    <div class="pt-6">
+        @if (_loading)
+        {
+            <div class="text-center py-16 text-[#8c8378] dark:text-[#6a6480] text-sm" style="font-family:'JetBrains Mono',monospace">cargando…</div>
+        }
+        else
+        {
+            <FlashcardSession Cards="_filteredEntries" />
+        }
+    </div>
 </div>
 
 @code {

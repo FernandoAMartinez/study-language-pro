@@ -4,64 +4,53 @@
 @implements IAsyncDisposable
 
 <style>
-    .flashcard-scene {
-        perspective: 1100px;
-    }
+    .flashcard-scene { perspective: 1100px; }
     .flashcard-inner {
-        position: relative;
-        width: 100%;
-        height: 100%;
+        position: relative; width: 100%; height: 100%;
         transition: transform 0.55s cubic-bezier(0.45, 0, 0.55, 1);
         transform-style: preserve-3d;
     }
-    .flashcard-inner.is-flipped {
-        transform: rotateY(180deg);
-    }
+    .flashcard-inner.is-flipped { transform: rotateY(180deg); }
     .flashcard-face {
-        position: absolute;
-        inset: 0;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        position: absolute; inset: 0;
+        backface-visibility: hidden; -webkit-backface-visibility: hidden;
+        display: flex; align-items: center; justify-content: center; flex-direction: column;
     }
-    .flashcard-face--back {
-        transform: rotateY(180deg);
-    }
-    .kanji-text {
-        font-family: "Noto Serif JP", serif;
-    }
+    .flashcard-face--back { transform: rotateY(180deg); }
+    /* bracket corners — standalone divs, no pseudo-element conflicts */
+    .bracket { position: absolute; width: 18px; height: 18px; }
+    .bracket-tl { top: 14px; left: 14px; border-top: 1px solid rgba(26,22,18,0.45); border-left: 1px solid rgba(26,22,18,0.45); }
+    .bracket-tr { top: 14px; right: 14px; border-top: 1px solid rgba(26,22,18,0.45); border-right: 1px solid rgba(26,22,18,0.45); }
+    .bracket-bl { bottom: 14px; left: 14px; border-bottom: 1px solid rgba(26,22,18,0.45); border-left: 1px solid rgba(26,22,18,0.45); }
+    .bracket-br { bottom: 14px; right: 14px; border-bottom: 1px solid rgba(26,22,18,0.45); border-right: 1px solid rgba(26,22,18,0.45); }
+    :where(.dark) .bracket-tl { border-color: rgba(237,233,245,0.30); }
+    :where(.dark) .bracket-tr { border-color: rgba(237,233,245,0.30); }
+    :where(.dark) .bracket-bl { border-color: rgba(237,233,245,0.30); }
+    :where(.dark) .bracket-br { border-color: rgba(237,233,245,0.30); }
 </style>
 
 @if (_showSummary)
 {
-    <!-- Session summary -->
-    <div class="flex flex-col items-center justify-center py-10 gap-6">
-        <div class="bg-white dark:bg-[#19182A] rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.10)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.45)] p-8 w-full max-w-sm text-center">
-            <div class="w-16 h-16 bg-[#E8402A]/10 dark:bg-[#E8402A]/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span class="text-3xl">🎉</span>
-            </div>
-            <h2 class="text-xl font-bold text-[#1A1523] dark:text-[#EDE9F5] mb-1">¡Sesión completa!</h2>
-            <p class="text-sm text-[#6B6480] dark:text-[#9590A8] mb-6">よくできました！</p>
-
-            <div class="grid grid-cols-3 gap-3 mb-7">
-                <div class="bg-[#F9F7F4] dark:bg-[#211E35] rounded-2xl p-3">
-                    <p class="text-2xl font-bold text-[#1A1523] dark:text-[#EDE9F5]">@_deck.Count</p>
-                    <p class="text-[11px] text-[#6B6480] dark:text-[#9590A8] mt-0.5 font-medium">Total</p>
+    <div class="flex flex-col items-center justify-center py-16">
+        <div class="w-full max-w-sm border border-[rgba(26,22,18,0.12)] dark:border-white/8 bg-[#f4efe6] dark:bg-[#0e0c08] p-8 text-center shadow-[0_14px_40px_-16px_rgba(26,22,18,0.18)]">
+            <p class="text-[10px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.2em] uppercase mb-4" style="font-family:'JetBrains Mono',monospace">sesión completa</p>
+            <p class="text-[#1a1612] dark:text-[#ede9f5] mb-6 leading-none" style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:38px">よくできました</p>
+            <div class="grid grid-cols-3 gap-3 mb-7 border-t border-[rgba(26,22,18,0.10)] dark:border-white/5 pt-6">
+                <div class="text-center">
+                    <p class="text-2xl text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Cormorant Garamond',serif;font-weight:500">@_deck.Count</p>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] mt-1 tracking-[0.14em] uppercase" style="font-family:'JetBrains Mono',monospace">total</p>
                 </div>
-                <div class="bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl p-3">
-                    <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">@_knownCount</p>
-                    <p class="text-[11px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5 font-medium">Lo sé</p>
+                <div class="text-center">
+                    <p class="text-2xl text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Cormorant Garamond',serif;font-weight:500">@_knownCount</p>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] mt-1 tracking-[0.14em] uppercase" style="font-family:'JetBrains Mono',monospace">lo sé</p>
                 </div>
-                <div class="bg-amber-50 dark:bg-amber-950/50 rounded-2xl p-3">
-                    <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">@_reviewCount</p>
-                    <p class="text-[11px] text-amber-600/70 dark:text-amber-400/70 mt-0.5 font-medium">Repasar</p>
+                <div class="text-center">
+                    <p class="text-2xl text-[#b34234]" style="font-family:'Cormorant Garamond',serif;font-weight:500">@_reviewCount</p>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] mt-1 tracking-[0.14em] uppercase" style="font-family:'JetBrains Mono',monospace">fallé</p>
                 </div>
             </div>
-
             <button @onclick="Restart"
-                class="w-full bg-[#E8402A] hover:bg-[#d03320] active:bg-[#bc2d1c] text-white font-bold py-3 px-6 rounded-2xl transition-colors shadow-[0_2px_12px_rgba(232,64,42,0.35)] text-sm">
+                class="w-full py-3 bg-[#1a1612] dark:bg-[#ede9f5] text-[#f4efe6] dark:text-[#1a1612] hover:bg-[#5a5048] dark:hover:bg-white transition-colors text-xs tracking-[0.08em] uppercase" style="font-family:'JetBrains Mono',monospace">
                 Estudiar de nuevo
             </button>
         </div>
@@ -69,109 +58,150 @@
 }
 else if (!_deck.Any())
 {
-    <div class="flex flex-col items-center justify-center py-20 gap-4">
-        <div class="w-20 h-20 rounded-3xl bg-[#F3F0EC] dark:bg-[#211E35] flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 text-[#B5B0BE] dark:text-[#6A6480]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-        </div>
-        <p class="text-sm font-semibold text-[#1A1523] dark:text-[#EDE9F5]">No hay tarjetas para estudiar</p>
-        <p class="text-xs text-[#6B6480] dark:text-[#9590A8]">Agregá palabras al vocabulario primero.</p>
+    <div class="flex flex-col items-center justify-center py-24">
+        <p class="text-[#8c8378] dark:text-[#6a6480] text-sm text-center" style="font-family:'JetBrains Mono',monospace">sin tarjetas · agregá palabras primero</p>
     </div>
 }
 else
 {
     var current = _deck[_currentIndex];
 
-    <!-- Progress bar -->
-    <div class="mb-5">
-        <div class="flex justify-between text-xs text-[#6B6480] dark:text-[#9590A8] mb-2 font-medium">
-            <span>@(_currentIndex + 1) <span class="opacity-50">/ @_deck.Count</span></span>
-            <span>
-                <span class="text-emerald-600 dark:text-emerald-400">@_knownCount ✓</span>
-                <span class="mx-1 opacity-30">·</span>
-                <span class="text-amber-600 dark:text-amber-400">@_reviewCount ↺</span>
-            </span>
-        </div>
-        <div class="h-1.5 bg-[#E8E4EF] dark:bg-[#211E35] rounded-full overflow-hidden">
-            <div class="h-full bg-[#E8402A] rounded-full transition-all duration-500 ease-out"
-                style="width: @((_currentIndex * 100.0 / _deck.Count).ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%">
+    <!-- Progress -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3 flex-1">
+            <div class="flex-1 h-px bg-[rgba(26,22,18,0.12)] dark:bg-white/10 relative">
+                <div class="absolute inset-y-0 left-0 bg-[#1a1612] dark:bg-[#ede9f5] transition-all duration-500"
+                    style="width: @((_currentIndex * 100.0 / _deck.Count).ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%">
+                </div>
             </div>
+            <span class="text-[#8c8378] dark:text-[#6a6480] shrink-0" style="font-family:'JetBrains Mono',monospace;font-size:11px">@(_currentIndex + 1) / @_deck.Count</span>
+        </div>
+        <div class="flex items-center gap-3 ml-6 shrink-0">
+            <span class="text-[11px] text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'JetBrains Mono',monospace">@_knownCount sé</span>
+            @if (_hardCount > 0) {
+                <span class="text-[11px] text-[#8c8378] dark:text-[#6a6480]" style="font-family:'JetBrains Mono',monospace">@_hardCount ~</span>
+            }
+            <span class="text-[11px] text-[#b34234]" style="font-family:'JetBrains Mono',monospace">@_reviewCount ✗</span>
         </div>
     </div>
 
     <!-- Card -->
     <div id="flashcard-card"
-        class="flashcard-scene card-swipe-wrapper w-full max-w-lg mx-auto mb-5 select-none h-[272px] sm:h-[308px] @_exitClass"
+        class="flashcard-scene card-swipe-wrapper w-full max-w-lg mx-auto mb-5 select-none h-[340px] sm:h-[380px] @_exitClass"
         @onclick="ToggleFlip">
-
         <div class="flashcard-inner @(isFlipped ? "is-flipped" : "")">
 
-            <!-- Front: Kanji / Kana / Romaji -->
-            <div class="flashcard-face rounded-3xl bg-white dark:bg-[#19182A] shadow-[0_4px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_32px_rgba(0,0,0,0.50)] flex-col gap-1.5 px-8">
-                @if (!string.IsNullOrEmpty(current.Kanji) || !string.IsNullOrEmpty(current.Kana))
-                {
+            <!-- ── FRONT: Kanji · Kana · Romaji ─────────────────────────────── -->
+            <div class="flashcard-face bg-[#fbf7ee] dark:bg-[#19150E] border border-[rgba(26,22,18,0.14)] dark:border-white/8"
+                 style="box-shadow:0 1px 0 rgba(26,22,18,0.04),0 14px 40px -16px rgba(26,22,18,0.18)">
+                <!-- Corner brackets -->
+                <div class="bracket bracket-tl"></div>
+                <div class="bracket bracket-tr"></div>
+                <div class="bracket bracket-bl"></div>
+                <div class="bracket bracket-br"></div>
+
+                <!-- Meta labels -->
+                <div class="absolute top-4 left-5 text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.2em] uppercase" style="font-family:'JetBrains Mono',monospace">Anverso</div>
+                <div class="absolute top-4 right-5 text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.12em]" style="font-family:'JetBrains Mono',monospace">@(current.Tags.FirstOrDefault() ?? current.TipoPalabra)</div>
+
+                <!-- Japanese text -->
+                <div class="flex flex-col items-center gap-2 px-10 w-full text-center">
                     @if (!string.IsNullOrEmpty(current.Kanji))
                     {
-                        <p class="kanji-text text-5xl sm:text-6xl font-bold text-[#1A1523] dark:text-[#EDE9F5] text-center leading-tight">@current.Kanji</p>
+                        <p class="text-6xl sm:text-7xl font-medium text-[#1a1612] dark:text-[#ede9f5] leading-none" style="font-family:'Noto Serif JP',serif">@current.Kanji</p>
+                        @if (!string.IsNullOrEmpty(current.Kana))
+                        {
+                            <p class="text-xl text-[#5a5048] dark:text-[#9590A8]">@current.Kana</p>
+                        }
+                        <p class="text-sm text-[#8c8378] dark:text-[#6a6480] tracking-[0.04em]" style="font-family:'JetBrains Mono',monospace">@current.Romaji</p>
                     }
-                    @if (!string.IsNullOrEmpty(current.Kana))
+                    else if (!string.IsNullOrEmpty(current.Kana))
                     {
-                        <p class="text-xl text-[#6B6480] dark:text-[#9590A8] text-center mt-1">@current.Kana</p>
+                        <p class="text-5xl font-medium text-[#1a1612] dark:text-[#ede9f5] leading-none" style="font-family:'Noto Serif JP',serif">@current.Kana</p>
+                        <p class="text-sm text-[#8c8378] dark:text-[#6a6480] tracking-[0.04em]" style="font-family:'JetBrains Mono',monospace">@current.Romaji</p>
                     }
-                    <p class="text-base text-[#B5B0BE] dark:text-[#6A6480] italic text-center">@current.Romaji</p>
-                }
-                else
-                {
-                    <p class="kanji-text text-4xl font-bold text-[#1A1523] dark:text-[#EDE9F5] text-center">@current.Romaji</p>
-                }
-                <p class="text-[11px] text-[#C5C0CE] dark:text-[#4A4460] mt-5 text-center font-medium tracking-wide">Tocá · ← No sé · → Lo sé</p>
-                <button @onclick:stopPropagation="true" @onclick="() => SpeakCard(current)"
-                    title="Escuchar pronunciación"
-                    class="mt-3 flex items-center gap-1.5 self-center px-3 py-1.5 rounded-xl bg-[#F3F0EC] dark:bg-[#211E35] hover:bg-[#E8E4EF] dark:hover:bg-[#2A2640] active:scale-95 transition-all text-[#6B6480] dark:text-[#9590A8] text-xs font-semibold">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728" />
-                    </svg>
-                    Escuchar
-                </button>
+                    else
+                    {
+                        <p class="text-4xl font-medium text-[#1a1612] dark:text-[#ede9f5] italic" style="font-family:'Cormorant Garamond',serif">@current.Romaji</p>
+                    }
+
+                    <!-- TTS -->
+                    <button @onclick:stopPropagation="true" @onclick="() => SpeakCard(current)"
+                        class="mt-2 text-[9px] text-[#8c8378] hover:text-[#1a1612] dark:hover:text-[#ede9f5] tracking-[0.16em] uppercase transition-colors" style="font-family:'JetBrains Mono',monospace">
+                        ▶ escuchar
+                    </button>
+                </div>
+
+                <!-- Bottom hint -->
+                <div class="absolute bottom-4 left-6 right-6 text-center border-t border-[rgba(26,22,18,0.07)] pt-3">
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.2em] uppercase" style="font-family:'JetBrains Mono',monospace">Toca para revelar</p>
+                </div>
             </div>
 
-            <!-- Back: Significado / Ejemplo / TipoPalabra -->
-            <div class="flashcard-face flashcard-face--back rounded-3xl @GetCardBackClass(current.TipoPalabra) shadow-[0_4px_32px_rgba(0,0,0,0.22)] flex-col gap-2 px-8">
+            <!-- ── BACK: Significado · Ejemplo · Tipo ───────────────────────── -->
+            <div class="flashcard-face flashcard-face--back @GetCardBackClass(current.TipoPalabra)"
+                 style="box-shadow:0 1px 0 rgba(26,22,18,0.04),0 14px 40px -16px rgba(26,22,18,0.22)">
+                <!-- Corner brackets (white on colored bg) -->
+                <div class="bracket bracket-tl" style="border-color:rgba(255,255,255,0.4)"></div>
+                <div class="bracket bracket-tr" style="border-color:rgba(255,255,255,0.4)"></div>
+                <div class="bracket bracket-bl" style="border-color:rgba(255,255,255,0.4)"></div>
+                <div class="bracket bracket-br" style="border-color:rgba(255,255,255,0.4)"></div>
+
+                <!-- Tag / tipo -->
+                <div class="absolute top-4 right-5 text-[9px] tracking-[0.12em] opacity-60 text-white" style="font-family:'JetBrains Mono',monospace">
+                    @(current.Tags.FirstOrDefault() ?? string.Empty)
+                </div>
                 @if (!string.IsNullOrWhiteSpace(current.TipoPalabra))
                 {
-                    <span class="inline-block self-center px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase mb-1 @GetBadgeClass(current.TipoPalabra)">
+                    <div class="absolute top-4 left-5 text-[9px] tracking-[0.14em] uppercase opacity-70 text-white" style="font-family:'JetBrains Mono',monospace">
                         @GetTipoLabel(current.TipoPalabra)
-                    </span>
+                    </div>
                 }
-                <p class="text-3xl font-bold text-white text-center leading-snug">@current.Significado</p>
-                @if (!string.IsNullOrWhiteSpace(current.Ejemplo))
-                {
-                    <p class="text-sm italic @GetExampleClass(current.TipoPalabra) mt-2 text-center leading-relaxed">@current.Ejemplo</p>
-                }
-            </div>
 
+                <!-- Content -->
+                <div class="flex flex-col items-center gap-2 px-10 w-full text-center">
+                    @if (!string.IsNullOrEmpty(current.Kanji))
+                    {
+                        <p class="text-2xl font-medium text-white/70" style="font-family:'Noto Serif JP',serif">@current.Kanji</p>
+                    }
+                    <p class="text-[9px] tracking-[0.2em] uppercase text-white/60 mb-1" style="font-family:'JetBrains Mono',monospace">significado</p>
+                    <p class="text-4xl sm:text-5xl leading-tight text-white" style="font-family:'Cormorant Garamond',serif;font-style:italic">@current.Significado</p>
+                    <p class="text-[11px] tracking-[0.04em] text-white/70 mt-0.5" style="font-family:'JetBrains Mono',monospace">@current.Romaji</p>
+                    @if (!string.IsNullOrWhiteSpace(current.Ejemplo))
+                    {
+                        <div class="mt-3 px-4 py-2.5 border-l-2 border-white/30 bg-white/10 text-left w-full">
+                            <p class="text-[9px] tracking-[0.16em] uppercase text-white/60 mb-1" style="font-family:'JetBrains Mono',monospace">Ejemplo</p>
+                            <p class="text-sm text-white/90" style="font-family:'Noto Serif JP',serif">@current.Ejemplo</p>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Action buttons -->
-    <div class="flex gap-3 max-w-lg mx-auto">
-        <button @onclick="() => AnswerWithAnimation(false)"
+    <!-- 3 answer buttons — flat style from JSX -->
+    <div class="flex gap-2 max-w-lg mx-auto">
+        <button @onclick="() => AnswerWithAnimation(Rating.Failed)"
             disabled="@_isAnswering"
-            class="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-950/70 active:bg-amber-100 text-amber-700 dark:text-amber-400 font-bold text-sm transition-colors border border-amber-200/60 dark:border-amber-800/40 disabled:opacity-40">
-            <span class="text-lg">↺</span> No sé
+            class="flex-1 py-3.5 border border-[#b34234] text-[#b34234] hover:bg-[rgba(179,66,52,0.06)] transition-colors text-xs tracking-[0.08em] uppercase disabled:opacity-40" style="font-family:'JetBrains Mono',monospace">
+            Fallé
         </button>
-        <button @onclick="() => AnswerWithAnimation(true)"
+        <button @onclick="() => AnswerWithAnimation(Rating.Hard)"
             disabled="@_isAnswering"
-            class="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/70 active:bg-emerald-100 text-emerald-700 dark:text-emerald-400 font-bold text-sm transition-colors border border-emerald-200/60 dark:border-emerald-800/40 disabled:opacity-40">
-            <span class="text-lg">✓</span> Lo sé
+            class="flex-1 py-3.5 border border-[rgba(26,22,18,0.18)] dark:border-white/15 text-[#5a5048] dark:text-[#9590A8] hover:bg-[rgba(26,22,18,0.05)] dark:hover:bg-white/5 transition-colors text-xs tracking-[0.08em] uppercase disabled:opacity-40" style="font-family:'JetBrains Mono',monospace">
+            Difícil
+        </button>
+        <button @onclick="() => AnswerWithAnimation(Rating.Known)"
+            disabled="@_isAnswering"
+            class="flex-1 py-3.5 bg-[#1a1612] dark:bg-[#ede9f5] border border-[#1a1612] dark:border-[#ede9f5] text-[#f4efe6] dark:text-[#1a1612] hover:bg-[#5a5048] dark:hover:bg-white transition-colors text-xs tracking-[0.08em] uppercase disabled:opacity-40" style="font-family:'JetBrains Mono',monospace">
+            Lo sé
         </button>
     </div>
 }
 
 @code {
+    private enum Rating { Failed, Hard, Known }
+
     [Parameter, EditorRequired] public IReadOnlyList<VocabularyEntry> Cards { get; set; } = [];
 
     private List<VocabularyEntry> _deck = [];
@@ -179,6 +209,7 @@ else
     private bool isFlipped;
     private bool _showSummary;
     private int _knownCount;
+    private int _hardCount;
     private int _reviewCount;
     private List<string> _reviewedWordIds = new();
     private string _exitClass = string.Empty;
@@ -188,10 +219,7 @@ else
 
     private const string SessionsKey = "study_sessions";
 
-    protected override void OnParametersSet()
-    {
-        Restart();
-    }
+    protected override void OnParametersSet() => Restart();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -203,10 +231,7 @@ else
         }
     }
 
-    private void ToggleFlip()
-    {
-        if (!_isAnswering) isFlipped = !isFlipped;
-    }
+    private void ToggleFlip() { if (!_isAnswering) isFlipped = !isFlipped; }
 
     private async Task SpeakCard(VocabularyEntry entry)
     {
@@ -218,40 +243,30 @@ else
     public async Task OnSwipe(string direction)
     {
         if (_isAnswering || _showSummary || !_deck.Any()) return;
-        await AnswerWithAnimation(direction == "right");
+        await AnswerWithAnimation(direction == "right" ? Rating.Known : Rating.Failed);
     }
 
-    private async Task AnswerWithAnimation(bool known)
+    private async Task AnswerWithAnimation(Rating rating)
     {
         if (_isAnswering) return;
         _isAnswering = true;
-
-        _exitClass = known ? "card-exit-right" : "card-exit-left";
+        _exitClass = rating == Rating.Known ? "card-exit-right" : "card-exit-left";
         StateHasChanged();
-        await Task.Delay(400);
+        await Task.Delay(380);
 
         var current = _deck[_currentIndex];
-        if (known)
-            _knownCount++;
-        else
+        switch (rating)
         {
-            _reviewCount++;
-            _reviewedWordIds.Add(current.Id.ToString());
+            case Rating.Known:  _knownCount++; break;
+            case Rating.Hard:   _hardCount++;  _reviewedWordIds.Add(current.Id.ToString()); break;
+            case Rating.Failed: _reviewCount++; _reviewedWordIds.Add(current.Id.ToString()); break;
         }
 
         _exitClass = string.Empty;
         isFlipped = false;
 
-        if (_currentIndex + 1 >= _deck.Count)
-        {
-            _showSummary = true;
-            await SaveSession();
-        }
-        else
-        {
-            _currentIndex++;
-            _needsSwipeAttach = true;
-        }
+        if (_currentIndex + 1 >= _deck.Count) { _showSummary = true; await SaveSession(); }
+        else { _currentIndex++; _needsSwipeAttach = true; }
 
         _isAnswering = false;
         StateHasChanged();
@@ -259,91 +274,54 @@ else
 
     private async Task SaveSession()
     {
-        var sessions = await LocalStorage.GetItemAsync<List<StudySession>>(SessionsKey)
-            ?? new List<StudySession>();
-
+        var sessions = await LocalStorage.GetItemAsync<List<StudySession>>(SessionsKey) ?? new List<StudySession>();
         sessions.Add(new StudySession
         {
-            Id = Guid.NewGuid(),
-            Date = DateTime.UtcNow,
-            TotalCards = _deck.Count,
-            KnownCount = _knownCount,
-            ReviewCount = _reviewCount,
+            Id = Guid.NewGuid(), Date = DateTime.UtcNow, TotalCards = _deck.Count,
+            KnownCount = _knownCount, HardCount = _hardCount, ReviewCount = _reviewCount,
             ReviewedWordIds = new List<string>(_reviewedWordIds)
         });
-
         await LocalStorage.SetItemAsync(SessionsKey, sessions);
     }
 
     private void Restart()
     {
         _deck = Cards.OrderBy(_ => Random.Shared.Next()).ToList();
-        _currentIndex = 0;
-        isFlipped = false;
-        _showSummary = false;
-        _knownCount = 0;
-        _reviewCount = 0;
-        _reviewedWordIds = new();
-        _exitClass = string.Empty;
-        _isAnswering = false;
-        _needsSwipeAttach = true;
+        _currentIndex = 0; isFlipped = false; _showSummary = false;
+        _knownCount = 0; _hardCount = 0; _reviewCount = 0;
+        _reviewedWordIds = new(); _exitClass = string.Empty;
+        _isAnswering = false; _needsSwipeAttach = true;
     }
 
     public async ValueTask DisposeAsync()
     {
-        try { await JS.InvokeVoidAsync("swipeInterop.detachSwipe", "flashcard-card"); }
-        catch { /* component unmounted before JS could run */ }
+        try { await JS.InvokeVoidAsync("swipeInterop.detachSwipe", "flashcard-card"); } catch { }
         _selfRef?.Dispose();
     }
 
-    // ── Word-type colour helpers ─────────────────────────────────────────────
-
     private static string NormalizeTipo(string tipo) =>
         tipo.Trim().ToLowerInvariant()
-            .Replace("á", "a").Replace("é", "e").Replace("í", "i")
-            .Replace("ó", "o").Replace("ú", "u");
-
-    private static string GetCardBackClass(string tipo) => NormalizeTipo(tipo) switch
-    {
-        "sustantivo"                   => "bg-sky-600",
-        "adjetivo"                     => "bg-violet-600",
-        "adverbio"                     => "bg-amber-500",
-        "verbo"                        => "bg-emerald-600",
-        "expresion" or "expresión"     => "bg-rose-500",
-        "particula" or "partícula"     => "bg-teal-600",
-        _                              => "bg-[#E8402A]",
-    };
-
-    private static string GetBadgeClass(string tipo) => NormalizeTipo(tipo) switch
-    {
-        "sustantivo"                   => "bg-sky-800/50 text-sky-100",
-        "adjetivo"                     => "bg-violet-800/50 text-violet-100",
-        "adverbio"                     => "bg-amber-700/50 text-amber-100",
-        "verbo"                        => "bg-emerald-800/50 text-emerald-100",
-        "expresion" or "expresión"     => "bg-rose-700/50 text-rose-100",
-        "particula" or "partícula"     => "bg-teal-800/50 text-teal-100",
-        _                              => "bg-black/20 text-white",
-    };
-
-    private static string GetExampleClass(string tipo) => NormalizeTipo(tipo) switch
-    {
-        "sustantivo"                   => "text-sky-200",
-        "adjetivo"                     => "text-violet-200",
-        "adverbio"                     => "text-amber-100",
-        "verbo"                        => "text-emerald-200",
-        "expresion" or "expresión"     => "text-rose-200",
-        "particula" or "partícula"     => "text-teal-200",
-        _                              => "text-white/80",
-    };
+            .Replace("á","a").Replace("é","e").Replace("í","i").Replace("ó","o").Replace("ú","u");
 
     private static string GetTipoLabel(string tipo) => NormalizeTipo(tipo) switch
     {
-        "sustantivo"                   => "Sustantivo",
-        "adjetivo"                     => "Adjetivo",
-        "adverbio"                     => "Adverbio",
-        "verbo"                        => "Verbo",
-        "expresion" or "expresión"     => "Expresión",
-        "particula" or "partícula"     => "Partícula",
-        _                              => tipo,
+        "sustantivo"               => "Sustantivo",
+        "adjetivo"                 => "Adjetivo",
+        "adverbio"                 => "Adverbio",
+        "verbo"                    => "Verbo",
+        "expresion" or "expresión" => "Expresión",
+        "particula" or "partícula" => "Partícula",
+        _                          => tipo,
+    };
+
+    private static string GetCardBackClass(string tipo) => NormalizeTipo(tipo) switch
+    {
+        "sustantivo"               => "bg-sky-700 text-white",
+        "adjetivo"                 => "bg-violet-700 text-white",
+        "adverbio"                 => "bg-amber-600 text-white",
+        "verbo"                    => "bg-emerald-700 text-white",
+        "expresion" or "expresión" => "bg-rose-600 text-white",
+        "particula" or "partícula" => "bg-teal-700 text-white",
+        _                          => "bg-[#1a1612] text-[#f4efe6]",
     };
 }

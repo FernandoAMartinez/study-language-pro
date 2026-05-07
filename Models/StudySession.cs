@@ -6,6 +6,7 @@ public class StudySession
     public DateTime Date { get; set; } = DateTime.UtcNow;
     public int TotalCards { get; set; }
     public int KnownCount { get; set; }
+    public int HardCount { get; set; }
     public int ReviewCount { get; set; }
     public List<string> ReviewedWordIds { get; set; } = new();
 }
