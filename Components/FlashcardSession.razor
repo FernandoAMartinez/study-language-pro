@@ -139,21 +139,21 @@ else
             </div>
 
             <!-- ── BACK: Significado · Ejemplo · Tipo ───────────────────────── -->
-            <div class="flashcard-face flashcard-face--back @GetCardBackClass(current.TipoPalabra)"
-                 style="box-shadow:0 1px 0 rgba(26,22,18,0.04),0 14px 40px -16px rgba(26,22,18,0.22)">
-                <!-- Corner brackets (white on colored bg) -->
-                <div class="bracket bracket-tl" style="border-color:rgba(255,255,255,0.4)"></div>
-                <div class="bracket bracket-tr" style="border-color:rgba(255,255,255,0.4)"></div>
-                <div class="bracket bracket-bl" style="border-color:rgba(255,255,255,0.4)"></div>
-                <div class="bracket bracket-br" style="border-color:rgba(255,255,255,0.4)"></div>
+            <div class="flashcard-face flashcard-face--back bg-[#fbf7ee] dark:bg-[#19150E] border border-[rgba(26,22,18,0.14)] dark:border-white/8"
+                 style="box-shadow:0 1px 0 rgba(26,22,18,0.04),0 14px 40px -16px rgba(26,22,18,0.18)">
+                <!-- Corner brackets -->
+                <div class="bracket bracket-tl"></div>
+                <div class="bracket bracket-tr"></div>
+                <div class="bracket bracket-bl"></div>
+                <div class="bracket bracket-br"></div>
 
-                <!-- Tag / tipo -->
-                <div class="absolute top-4 right-5 text-[9px] tracking-[0.12em] opacity-60 text-white" style="font-family:'JetBrains Mono',monospace">
+                <!-- Meta -->
+                <div class="absolute top-4 right-5 text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.12em]" style="font-family:'JetBrains Mono',monospace">
                     @(current.Tags.FirstOrDefault() ?? string.Empty)
                 </div>
                 @if (!string.IsNullOrWhiteSpace(current.TipoPalabra))
                 {
-                    <div class="absolute top-4 left-5 text-[9px] tracking-[0.14em] uppercase opacity-70 text-white" style="font-family:'JetBrains Mono',monospace">
+                    <div class="absolute top-4 left-5 text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.14em] uppercase" style="font-family:'JetBrains Mono',monospace">
                         @GetTipoLabel(current.TipoPalabra)
                     </div>
                 }
@@ -162,16 +162,16 @@ else
                 <div class="flex flex-col items-center gap-2 px-10 w-full text-center">
                     @if (!string.IsNullOrEmpty(current.Kanji))
                     {
-                        <p class="text-2xl font-medium text-white/70" style="font-family:'Noto Serif JP',serif">@current.Kanji</p>
+                        <p class="text-2xl font-medium text-[#1a1612] dark:text-[#ede9f5] opacity-50" style="font-family:'Noto Serif JP',serif">@current.Kanji</p>
                     }
-                    <p class="text-[9px] tracking-[0.2em] uppercase text-white/60 mb-1" style="font-family:'JetBrains Mono',monospace">significado</p>
-                    <p class="text-4xl sm:text-5xl leading-tight text-white" style="font-family:'Cormorant Garamond',serif;font-style:italic">@current.Significado</p>
-                    <p class="text-[11px] tracking-[0.04em] text-white/70 mt-0.5" style="font-family:'JetBrains Mono',monospace">@current.Romaji</p>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.2em] uppercase mb-1" style="font-family:'JetBrains Mono',monospace">significado</p>
+                    <p class="text-4xl sm:text-5xl leading-tight text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Cormorant Garamond',serif;font-style:italic">@current.Significado</p>
+                    <p class="text-[11px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.04em] mt-1" style="font-family:'JetBrains Mono',monospace">@current.Romaji</p>
                     @if (!string.IsNullOrWhiteSpace(current.Ejemplo))
                     {
-                        <div class="mt-3 px-4 py-2.5 border-l-2 border-white/30 bg-white/10 text-left w-full">
-                            <p class="text-[9px] tracking-[0.16em] uppercase text-white/60 mb-1" style="font-family:'JetBrains Mono',monospace">Ejemplo</p>
-                            <p class="text-sm text-white/90" style="font-family:'Noto Serif JP',serif">@current.Ejemplo</p>
+                        <div class="mt-4 px-4 py-2.5 border-l-2 border-[#b34234] bg-[rgba(179,66,52,0.06)] dark:bg-[rgba(179,66,52,0.10)] text-left w-full">
+                            <p class="text-[9px] text-[#b34234] tracking-[0.16em] uppercase mb-1" style="font-family:'JetBrains Mono',monospace">Ejemplo</p>
+                            <p class="text-sm text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Noto Serif JP',serif">@current.Ejemplo</p>
                         </div>
                     }
                 </div>
@@ -314,14 +314,4 @@ else
         _                          => tipo,
     };
 
-    private static string GetCardBackClass(string tipo) => NormalizeTipo(tipo) switch
-    {
-        "sustantivo"               => "bg-sky-700 text-white",
-        "adjetivo"                 => "bg-violet-700 text-white",
-        "adverbio"                 => "bg-amber-600 text-white",
-        "verbo"                    => "bg-emerald-700 text-white",
-        "expresion" or "expresión" => "bg-rose-600 text-white",
-        "particula" or "partícula" => "bg-teal-700 text-white",
-        _                          => "bg-[#1a1612] text-[#f4efe6]",
-    };
 }
