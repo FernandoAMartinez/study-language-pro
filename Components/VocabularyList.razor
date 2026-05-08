@@ -2,12 +2,12 @@
 @inject IJSRuntime JS
 
 @{
-    var allTags = Entries.SelectMany(e => e.Tags).Distinct().OrderBy(t => t).ToList();
-    var displayed = _selectedTag switch
+    var allTipos = Entries.Select(e => e.TipoPalabra).Where(t => !string.IsNullOrEmpty(t)).Distinct().OrderBy(t => t).ToList();
+    var displayed = _selectedFilter switch
     {
         "__nuevas__" => Entries.Where(e => e.CreatedAt >= DateTime.UtcNow.AddDays(-7)).ToList(),
         "__todas__"  => Entries.ToList(),
-        var t when !string.IsNullOrEmpty(t) => Entries.Where(e => e.Tags.Contains(t)).ToList(),
+        var t when !string.IsNullOrEmpty(t) => Entries.Where(e => e.TipoPalabra == t).ToList(),
         _            => Entries.ToList()
     };
     var nuevasCount = Entries.Count(e => e.CreatedAt >= DateTime.UtcNow.AddDays(-7));
@@ -20,16 +20,16 @@
         {
             ("__todas__", "Todas", Entries.Count)
         };
-        foreach (var tag in allTags.Take(5))
-            filters.Add((tag, tag, Entries.Count(e => e.Tags.Contains(tag))));
+        foreach (var tipo in allTipos)
+            filters.Add((tipo, tipo, Entries.Count(e => e.TipoPalabra == tipo)));
         if (nuevasCount > 0)
             filters.Add(("__nuevas__", "Nuevas", nuevasCount));
     }
     @foreach (var (key, label, count) in filters)
     {
         var k = key;
-        bool active = _selectedTag == k;
-        <button @onclick="() => _selectedTag = k"
+        bool active = _selectedFilter == k;
+        <button @onclick="() => _selectedFilter = k"
             class="px-3 py-1 text-[11px] border transition-colors @(active ? "bg-[#1a1612] dark:bg-[#ede9f5] border-[#1a1612] dark:border-[#ede9f5] text-[#f4efe6] dark:text-[#1a1612]" : "border-[rgba(26,22,18,0.18)] dark:border-white/15 text-[#5a5048] dark:text-[#9590A8] hover:border-[rgba(26,22,18,0.35)] dark:hover:border-white/30")"
             style="border-radius:999px">
             @label · @count
@@ -124,7 +124,7 @@ else
     [Parameter] public EventCallback<VocabularyEntry> OnEdit { get; set; }
     [Parameter] public EventCallback<Guid> OnDelete { get; set; }
 
-    private string _selectedTag = "__todas__";
+    private string _selectedFilter = "__todas__";
 
     private async Task SpeakEntry(VocabularyEntry entry)
     {

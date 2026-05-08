@@ -12,21 +12,34 @@
             </h1>
         </div>
 
-        @if (_allTags.Any())
-        {
-            <div class="flex items-center gap-2 md:mb-1">
-                <label class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase shrink-0" style="font-family:'JetBrains Mono',monospace">Mazo</label>
-                <select @onchange="TagFilterChanged"
+        <div class="flex flex-wrap items-center gap-3 md:mb-1">
+            @if (_allTags.Any())
+            {
+                <div class="flex items-center gap-2">
+                    <label class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase shrink-0" style="font-family:'JetBrains Mono',monospace">Mazo</label>
+                    <select @onchange="TagFilterChanged"
+                        class="flex-1 md:flex-none text-xs border border-[rgba(26,22,18,0.18)] dark:border-white/10 px-2.5 py-1.5 text-[#1a1612] dark:text-[#ede9f5] focus:outline-none bg-transparent min-w-0" style="font-family:'JetBrains Mono',monospace;letter-spacing:0.04em">
+                        <option value="">Todas (@_allEntries.Count)</option>
+                        @foreach (var tag in _allTags)
+                        {
+                            var count = _allEntries.Count(e => e.Tags.Contains(tag));
+                            <option value="@tag">@tag (@count)</option>
+                        }
+                    </select>
+                </div>
+            }
+            <div class="flex items-center gap-2">
+                <label class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase shrink-0" style="font-family:'JetBrains Mono',monospace">Sesión</label>
+                <select @onchange="SizeFilterChanged"
                     class="flex-1 md:flex-none text-xs border border-[rgba(26,22,18,0.18)] dark:border-white/10 px-2.5 py-1.5 text-[#1a1612] dark:text-[#ede9f5] focus:outline-none bg-transparent min-w-0" style="font-family:'JetBrains Mono',monospace;letter-spacing:0.04em">
-                    <option value="">Todas (@_allEntries.Count)</option>
-                    @foreach (var tag in _allTags)
-                    {
-                        var count = _allEntries.Count(e => e.Tags.Contains(tag));
-                        <option value="@tag">@tag (@count)</option>
-                    }
+                    <option value="0">Todas</option>
+                    <option value="10">10 tarjetas</option>
+                    <option value="20">20 tarjetas</option>
+                    <option value="25">25 tarjetas</option>
+                    <option value="50">50 tarjetas</option>
                 </select>
             </div>
-        }
+        </div>
     </div>
 
     <div class="pt-6">
@@ -46,6 +59,7 @@
     private IReadOnlyList<VocabularyEntry> _filteredEntries = [];
     private List<string> _allTags = [];
     private string _selectedTag = string.Empty;
+    private int _sessionSize = 0;
     private bool _loading = true;
 
     private const string StorageKey = "vocabulary_entries";
@@ -64,10 +78,20 @@
         ApplyFilter();
     }
 
+    private void SizeFilterChanged(ChangeEventArgs e)
+    {
+        _sessionSize = int.TryParse(e.Value?.ToString(), out var n) ? n : 0;
+        ApplyFilter();
+    }
+
     private void ApplyFilter()
     {
-        _filteredEntries = string.IsNullOrEmpty(_selectedTag)
+        var pool = string.IsNullOrEmpty(_selectedTag)
             ? _allEntries
             : _allEntries.Where(e => e.Tags.Contains(_selectedTag)).ToList();
+
+        _filteredEntries = (_sessionSize > 0 && pool.Count > _sessionSize)
+            ? pool.OrderBy(_ => Random.Shared.Next()).Take(_sessionSize).ToList()
+            : pool;
     }
 }
