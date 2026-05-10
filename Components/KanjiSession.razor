@@ -1,0 +1,273 @@
+@using study_language_pro.Models
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<style>
+    .kanji-scene { perspective: 1100px; }
+    .kanji-inner {
+        position: relative; width: 100%; height: 100%;
+        transition: transform 0.55s cubic-bezier(0.45, 0, 0.55, 1);
+        transform-style: preserve-3d;
+    }
+    .kanji-inner.is-flipped { transform: rotateY(180deg); }
+    .kanji-face {
+        position: absolute; inset: 0;
+        backface-visibility: hidden; -webkit-backface-visibility: hidden;
+        display: flex; align-items: center; justify-content: center; flex-direction: column;
+    }
+    .kanji-face--back { transform: rotateY(180deg); }
+    .bracket { position: absolute; width: 18px; height: 18px; }
+    .bracket-tl { top: 14px; left: 14px; border-top: 1px solid rgba(26,22,18,0.45); border-left: 1px solid rgba(26,22,18,0.45); }
+    .bracket-tr { top: 14px; right: 14px; border-top: 1px solid rgba(26,22,18,0.45); border-right: 1px solid rgba(26,22,18,0.45); }
+    .bracket-bl { bottom: 14px; left: 14px; border-bottom: 1px solid rgba(26,22,18,0.45); border-left: 1px solid rgba(26,22,18,0.45); }
+    .bracket-br { bottom: 14px; right: 14px; border-bottom: 1px solid rgba(26,22,18,0.45); border-right: 1px solid rgba(26,22,18,0.45); }
+    :where(.dark) .bracket-tl,:where(.dark) .bracket-tr,:where(.dark) .bracket-bl,:where(.dark) .bracket-br { border-color: rgba(237,233,245,0.30); }
+</style>
+
+@if (_showSummary)
+{
+    <div class="flex flex-col items-center justify-center py-16">
+        <div class="w-full max-w-sm border border-[rgba(26,22,18,0.12)] dark:border-white/8 bg-[#f4efe6] dark:bg-[#0e0c08] p-8 text-center shadow-[0_14px_40px_-16px_rgba(26,22,18,0.18)]">
+            <p class="text-[10px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.2em] uppercase mb-4" style="font-family:'JetBrains Mono',monospace">sesión completa</p>
+            <p class="text-[#1a1612] dark:text-[#ede9f5] mb-6 leading-none" style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:38px">よくできました</p>
+            <div class="grid grid-cols-3 gap-3 mb-7 border-t border-[rgba(26,22,18,0.10)] dark:border-white/5 pt-6">
+                <div class="text-center">
+                    <p class="text-2xl text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Cormorant Garamond',serif;font-weight:500">@_deck.Count</p>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] mt-1 tracking-[0.14em] uppercase" style="font-family:'JetBrains Mono',monospace">total</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Cormorant Garamond',serif;font-weight:500">@_knownCount</p>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] mt-1 tracking-[0.14em] uppercase" style="font-family:'JetBrains Mono',monospace">lo sé</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl text-[#b34234]" style="font-family:'Cormorant Garamond',serif;font-weight:500">@_reviewCount</p>
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] mt-1 tracking-[0.14em] uppercase" style="font-family:'JetBrains Mono',monospace">fallé</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button @onclick="Restart"
+                    class="flex-1 py-3 bg-[#1a1612] dark:bg-[#ede9f5] text-[#f4efe6] dark:text-[#1a1612] hover:bg-[#5a5048] dark:hover:bg-white transition-colors text-xs tracking-[0.08em] uppercase" style="font-family:'JetBrains Mono',monospace">
+                    De nuevo
+                </button>
+                <button @onclick="() => OnExit.InvokeAsync()"
+                    class="flex-1 py-3 border border-[rgba(26,22,18,0.18)] dark:border-white/15 text-[#5a5048] dark:text-[#9590A8] hover:bg-[rgba(26,22,18,0.04)] dark:hover:bg-white/5 transition-colors text-xs tracking-[0.08em] uppercase" style="font-family:'JetBrains Mono',monospace">
+                    Volver
+                </button>
+            </div>
+        </div>
+    </div>
+}
+else if (!_deck.Any())
+{
+    <div class="flex flex-col items-center justify-center py-24">
+        <p class="text-[#8c8378] dark:text-[#6a6480] text-sm text-center" style="font-family:'JetBrains Mono',monospace">sin kanjis · importá primero</p>
+    </div>
+}
+else
+{
+    var current = _deck[_currentIndex];
+
+    <!-- Progress -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3 flex-1">
+            <div class="flex-1 h-px bg-[rgba(26,22,18,0.12)] dark:bg-white/10 relative">
+                <div class="absolute inset-y-0 left-0 bg-[#1a1612] dark:bg-[#ede9f5] transition-all duration-500"
+                    style="width: @((_currentIndex * 100.0 / _deck.Count).ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%">
+                </div>
+            </div>
+            <span class="text-[#8c8378] dark:text-[#6a6480] shrink-0" style="font-family:'JetBrains Mono',monospace;font-size:11px">@(_currentIndex + 1) / @_deck.Count</span>
+        </div>
+        <div class="flex items-center gap-3 ml-6 shrink-0">
+            <span class="text-[11px] text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'JetBrains Mono',monospace">@_knownCount sé</span>
+            @if (_hardCount > 0) {
+                <span class="text-[11px] text-[#8c8378] dark:text-[#6a6480]" style="font-family:'JetBrains Mono',monospace">@_hardCount ~</span>
+            }
+            <span class="text-[11px] text-[#b34234]" style="font-family:'JetBrains Mono',monospace">@_reviewCount ✗</span>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div id="kanji-card"
+        class="kanji-scene card-swipe-wrapper w-full max-w-lg mx-auto mb-5 select-none h-[360px] sm:h-[400px] @_exitClass"
+        @onclick="ToggleFlip">
+        <div class="kanji-inner @(_isFlipped ? "is-flipped" : "")">
+
+            <!-- FRONT: kanji character -->
+            <div class="kanji-face bg-[#fbf7ee] dark:bg-[#19150E] border border-[rgba(26,22,18,0.14)] dark:border-white/8"
+                 style="box-shadow:0 1px 0 rgba(26,22,18,0.04),0 14px 40px -16px rgba(26,22,18,0.18)">
+                <div class="bracket bracket-tl"></div>
+                <div class="bracket bracket-tr"></div>
+                <div class="bracket bracket-bl"></div>
+                <div class="bracket bracket-br"></div>
+                <div class="absolute top-4 left-5 text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.2em] uppercase" style="font-family:'JetBrains Mono',monospace">漢字</div>
+
+                <div class="flex flex-col items-center gap-3 px-10 text-center">
+                    <span class="text-[100px] sm:text-[120px] leading-none text-[#1a1612] dark:text-[#ede9f5]"
+                          style="font-family:'Noto Serif JP',serif">@current.Kanji</span>
+                </div>
+
+                <div class="absolute bottom-4 left-6 right-6 text-center border-t border-[rgba(26,22,18,0.07)] pt-3">
+                    <p class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.2em] uppercase" style="font-family:'JetBrains Mono',monospace">Toca para revelar</p>
+                </div>
+            </div>
+
+            <!-- BACK: meanings + readings + example -->
+            <div class="kanji-face kanji-face--back bg-[#fbf7ee] dark:bg-[#19150E] border border-[rgba(26,22,18,0.14)] dark:border-white/8"
+                 style="box-shadow:0 1px 0 rgba(26,22,18,0.04),0 14px 40px -16px rgba(26,22,18,0.18)">
+                <div class="bracket bracket-tl"></div>
+                <div class="bracket bracket-tr"></div>
+                <div class="bracket bracket-bl"></div>
+                <div class="bracket bracket-br"></div>
+
+                <div class="flex flex-col items-center gap-3 px-8 w-full text-center">
+                    <!-- Kanji dimmed -->
+                    <span class="text-3xl leading-none text-[#1a1612] dark:text-[#ede9f5] opacity-30"
+                          style="font-family:'Noto Serif JP',serif">@current.Kanji</span>
+
+                    <!-- Main meaning -->
+                    <p class="text-4xl sm:text-5xl leading-tight text-[#1a1612] dark:text-[#ede9f5]"
+                       style="font-family:'Cormorant Garamond',serif;font-style:italic">@current.SignificadoEs</p>
+
+                    @if (current.TraduccionesEs.Count > 1)
+                    {
+                        <p class="text-[11px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.04em]"
+                           style="font-family:'JetBrains Mono',monospace">@string.Join(" · ", current.TraduccionesEs.Skip(1).Take(2))</p>
+                    }
+
+                    <!-- Readings -->
+                    <div class="flex gap-5 mt-1">
+                        @if (!string.IsNullOrEmpty(current.Kunyomi))
+                        {
+                            <div class="flex flex-col items-center gap-0.5">
+                                <span class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.16em] uppercase" style="font-family:'JetBrains Mono',monospace">kun</span>
+                                <span class="text-base text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Noto Serif JP',serif">@current.Kunyomi</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(current.Onyomi))
+                        {
+                            <div class="flex flex-col items-center gap-0.5">
+                                <span class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.16em] uppercase" style="font-family:'JetBrains Mono',monospace">on</span>
+                                <span class="text-base text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Noto Serif JP',serif">@current.Onyomi</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- First example word -->
+                    @{
+                        var ex = current.EjemplosPalabras.FirstOrDefault();
+                        var oracion = current.Oraciones.FirstOrDefault();
+                    }
+                    @if (ex is not null)
+                    {
+                        <div class="mt-1 px-4 py-2 border-l-2 border-[#b34234] bg-[rgba(179,66,52,0.06)] dark:bg-[rgba(179,66,52,0.10)] text-left w-full">
+                            <p class="text-[9px] text-[#b34234] tracking-[0.16em] uppercase mb-0.5" style="font-family:'JetBrains Mono',monospace">Ejemplo</p>
+                            <div class="flex items-baseline gap-2 flex-wrap">
+                                <span class="text-sm text-[#1a1612] dark:text-[#ede9f5]" style="font-family:'Noto Serif JP',serif">@ex.Kanji</span>
+                                <span class="text-[10px] text-[#8c8378] dark:text-[#6a6480]" style="font-family:'JetBrains Mono',monospace">@ex.Lectura</span>
+                                <span class="text-xs italic text-[#5a5048] dark:text-[#9590A8]" style="font-family:'Cormorant Garamond',serif">@ex.SignificadoEs</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Answer buttons -->
+    <div class="flex gap-2 max-w-lg mx-auto">
+        <button @onclick="() => AnswerWithAnimation(Rating.Failed)"
+            disabled="@_isAnswering"
+            class="flex-1 py-3.5 border border-[#b34234] text-[#b34234] hover:bg-[rgba(179,66,52,0.06)] transition-colors text-xs tracking-[0.08em] uppercase disabled:opacity-40" style="font-family:'JetBrains Mono',monospace">
+            Fallé
+        </button>
+        <button @onclick="() => AnswerWithAnimation(Rating.Hard)"
+            disabled="@_isAnswering"
+            class="flex-1 py-3.5 border border-[rgba(26,22,18,0.18)] dark:border-white/15 text-[#5a5048] dark:text-[#9590A8] hover:bg-[rgba(26,22,18,0.05)] dark:hover:bg-white/5 transition-colors text-xs tracking-[0.08em] uppercase disabled:opacity-40" style="font-family:'JetBrains Mono',monospace">
+            Difícil
+        </button>
+        <button @onclick="() => AnswerWithAnimation(Rating.Known)"
+            disabled="@_isAnswering"
+            class="flex-1 py-3.5 bg-[#1a1612] dark:bg-[#ede9f5] border border-[#1a1612] dark:border-[#ede9f5] text-[#f4efe6] dark:text-[#1a1612] hover:bg-[#5a5048] dark:hover:bg-white transition-colors text-xs tracking-[0.08em] uppercase disabled:opacity-40" style="font-family:'JetBrains Mono',monospace">
+            Lo sé
+        </button>
+    </div>
+}
+
+@code {
+    private enum Rating { Failed, Hard, Known }
+
+    [Parameter, EditorRequired] public IReadOnlyList<KanjiEntry> Cards { get; set; } = [];
+    [Parameter] public EventCallback OnExit { get; set; }
+
+    private List<KanjiEntry> _deck = [];
+    private int _currentIndex;
+    private bool _isFlipped;
+    private bool _showSummary;
+    private int _knownCount;
+    private int _hardCount;
+    private int _reviewCount;
+    private string _exitClass = string.Empty;
+    private bool _isAnswering;
+    private bool _needsSwipeAttach = true;
+    private DotNetObjectReference<KanjiSession>? _selfRef;
+
+    protected override void OnParametersSet() => Restart();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_needsSwipeAttach && !_showSummary && _deck.Any())
+        {
+            _needsSwipeAttach = false;
+            _selfRef ??= DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("swipeInterop.attachSwipe", _selfRef, "kanji-card");
+        }
+    }
+
+    private void ToggleFlip() { if (!_isAnswering) _isFlipped = !_isFlipped; }
+
+    [JSInvokable]
+    public async Task OnSwipe(string direction)
+    {
+        if (_isAnswering || _showSummary || !_deck.Any()) return;
+        await AnswerWithAnimation(direction == "right" ? Rating.Known : Rating.Failed);
+    }
+
+    private async Task AnswerWithAnimation(Rating rating)
+    {
+        if (_isAnswering) return;
+        _isAnswering = true;
+        _exitClass = rating == Rating.Known ? "card-exit-right" : "card-exit-left";
+        StateHasChanged();
+        await Task.Delay(380);
+
+        switch (rating)
+        {
+            case Rating.Known:  _knownCount++; break;
+            case Rating.Hard:   _hardCount++;  break;
+            case Rating.Failed: _reviewCount++; break;
+        }
+
+        _exitClass = string.Empty;
+        _isFlipped = false;
+
+        if (_currentIndex + 1 >= _deck.Count) { _showSummary = true; }
+        else { _currentIndex++; _needsSwipeAttach = true; }
+
+        _isAnswering = false;
+        StateHasChanged();
+    }
+
+    private void Restart()
+    {
+        _deck = Cards.OrderBy(_ => Random.Shared.Next()).ToList();
+        _currentIndex = 0; _isFlipped = false; _showSummary = false;
+        _knownCount = 0; _hardCount = 0; _reviewCount = 0;
+        _exitClass = string.Empty; _isAnswering = false; _needsSwipeAttach = true;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("swipeInterop.detachSwipe", "kanji-card"); } catch { }
+        _selfRef?.Dispose();
+    }
+}

@@ -1,0 +1,144 @@
+@page "/kanjis"
+@using System.Text.Json
+@using study_language_pro.Models
+@inject ILocalStorageService Storage
+
+<PageTitle>漢字 — nihongo.diario</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+    <!-- Page header -->
+    <div class="flex items-end justify-between mb-0 pb-5 border-b border-[rgba(26,22,18,0.12)] dark:border-white/8">
+        <div>
+            <p class="text-[#8c8378] dark:text-[#6a6480] text-[10px] tracking-[0.18em] uppercase mb-2"
+               style="font-family:'JetBrains Mono',monospace">
+                漢字 · kanjis
+                @if (!_loading) { <span class="ml-3">@_entries.Count</span> }
+            </p>
+            <h1 class="text-[#1a1612] dark:text-[#ede9f5] leading-none"
+                style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:42px;font-weight:400">
+                Mi léxico kanji
+            </h1>
+        </div>
+        <div class="flex items-center gap-2 mb-1">
+            @if (!_practicing && _entries.Any())
+            {
+                <button @onclick="() => _practicing = true"
+                    class="flex items-center gap-1.5 px-4 py-2 bg-[#1a1612] dark:bg-[#ede9f5] text-[#f4efe6] dark:text-[#1a1612] text-xs hover:bg-[#5a5048] dark:hover:bg-white transition-colors"
+                    style="font-family:'JetBrains Mono',monospace;letter-spacing:0.06em">
+                    Practicar
+                </button>
+            }
+            @if (!_practicing)
+            {
+                <label class="flex items-center gap-1.5 px-3 py-2 border border-[rgba(26,22,18,0.18)] dark:border-white/10 text-[#5a5048] dark:text-[#9590A8] text-xs cursor-pointer hover:bg-[rgba(26,22,18,0.04)] dark:hover:bg-white/5 transition-colors"
+                       style="font-family:'JetBrains Mono',monospace;letter-spacing:0.06em">
+                    + Importar
+                    <InputFile OnChange="ImportFromJson" accept=".json" class="hidden" />
+                </label>
+            }
+        </div>
+    </div>
+
+    @if (_importMessage is not null)
+    {
+        <div class="mt-4 px-4 py-3 text-sm font-medium border-l-2 @(_importError ? "border-[#b34234] bg-[rgba(179,66,52,0.06)] text-[#b34234]" : "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400")">
+            @_importMessage
+        </div>
+    }
+
+    <div class="pt-6">
+        @if (_loading)
+        {
+            <div class="text-center py-16 text-[#8c8378] dark:text-[#6a6480] text-sm"
+                 style="font-family:'JetBrains Mono',monospace">cargando…</div>
+        }
+        else if (_practicing)
+        {
+            <KanjiSession Cards="_entries" OnExit="() => _practicing = false" />
+        }
+        else if (!_entries.Any())
+        {
+            <div class="flex flex-col items-center justify-center py-24 gap-3">
+                <p class="text-[#8c8378] dark:text-[#6a6480] text-sm"
+                   style="font-family:'JetBrains Mono',monospace">sin kanjis</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach (var entry in _entries)
+                {
+                    <KanjiCard Entry="entry" OnDelete="DeleteEntry" />
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<KanjiEntry> _entries = [];
+    private bool _loading = true;
+    private bool _practicing = false;
+    private string? _importMessage;
+    private bool _importError;
+
+    private const string StorageKey = "kanji_entries";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _entries = await Storage.GetItemAsync<List<KanjiEntry>>(StorageKey) ?? [];
+        _loading = false;
+    }
+
+    private async Task DeleteEntry(Guid id)
+    {
+        _entries.RemoveAll(e => e.Id == id);
+        await Storage.SetItemAsync(StorageKey, _entries);
+    }
+
+    private async Task ImportFromJson(InputFileChangeEventArgs e)
+    {
+        _importMessage = null;
+        _importError = false;
+        try
+        {
+            const long maxSize = 5 * 1024 * 1024;
+            await using var stream = e.File.OpenReadStream(maxSize);
+            using var ms = new System.IO.MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Seek(0, System.IO.SeekOrigin.Begin);
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var imported = await JsonSerializer.DeserializeAsync<List<KanjiImportDto>>(ms, options);
+
+            if (imported is null || imported.Count == 0)
+            {
+                _importMessage = "El archivo no contiene entradas válidas.";
+                _importError = true;
+                return;
+            }
+
+            int added = 0, skipped = 0;
+            var existingKeys = _entries.Select(x => x.Kanji.Trim().ToLowerInvariant()).ToHashSet();
+
+            foreach (var dto in imported)
+            {
+                if (string.IsNullOrWhiteSpace(dto.Kanji)) continue;
+                var key = dto.Kanji.Trim().ToLowerInvariant();
+                if (existingKeys.Contains(key)) { skipped++; continue; }
+                _entries.Add(dto.ToKanjiEntry());
+                existingKeys.Add(key);
+                added++;
+            }
+
+            await Storage.SetItemAsync(StorageKey, _entries);
+            _importMessage = added > 0 ? $"{added} kanji(s) importado(s)." : "No se importaron kanjis nuevos.";
+            if (skipped > 0) _importMessage += $" {skipped} duplicado(s) omitido(s).";
+        }
+        catch (Exception ex)
+        {
+            _importMessage = $"Error al importar: {ex.Message}";
+            _importError = true;
+        }
+    }
+}

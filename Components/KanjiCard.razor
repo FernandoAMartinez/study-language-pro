@@ -1,0 +1,112 @@
+@using study_language_pro.Models
+
+<div class="border border-[rgba(26,22,18,0.12)] dark:border-white/8 p-5 flex flex-col gap-4 group">
+
+    <!-- Kanji + significado -->
+    <div class="flex flex-col items-center gap-1 pb-4 border-b border-[rgba(26,22,18,0.08)] dark:border-white/6">
+        <span class="text-[72px] leading-none text-[#1a1612] dark:text-[#ede9f5]"
+              style="font-family:'Noto Serif JP',serif">@Entry.Kanji</span>
+        <p class="text-base italic text-[#1a1612] dark:text-[#ede9f5]"
+           style="font-family:'Cormorant Garamond',serif">
+            @string.Join(", ", Entry.TraduccionesEs)
+        </p>
+    </div>
+
+    <!-- Lecturas -->
+    <div class="flex gap-6 justify-center">
+        @if (!string.IsNullOrEmpty(Entry.Kunyomi))
+        {
+            <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase"
+                      style="font-family:'JetBrains Mono',monospace">kun</span>
+                <span class="text-sm text-[#1a1612] dark:text-[#ede9f5]"
+                      style="font-family:'Noto Serif JP',serif">@Entry.Kunyomi</span>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Entry.Onyomi))
+        {
+            <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase"
+                      style="font-family:'JetBrains Mono',monospace">on</span>
+                <span class="text-sm text-[#1a1612] dark:text-[#ede9f5]"
+                      style="font-family:'Noto Serif JP',serif">@Entry.Onyomi</span>
+            </div>
+        }
+    </div>
+
+    <!-- Palabras de ejemplo -->
+    @if (Entry.EjemplosPalabras.Any())
+    {
+        <div>
+            <button @onclick="() => _showPalabras = !_showPalabras"
+                    class="flex items-center gap-1.5 text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase w-full text-left mb-2 hover:text-[#1a1612] dark:hover:text-[#ede9f5] transition-colors"
+                    style="font-family:'JetBrains Mono',monospace">
+                <span>@(_showPalabras ? "▾" : "▸")</span>
+                <span>Palabras · @Entry.EjemplosPalabras.Count</span>
+            </button>
+            @if (_showPalabras)
+            {
+                <div class="flex flex-col gap-1.5">
+                    @foreach (var w in Entry.EjemplosPalabras)
+                    {
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-sm text-[#1a1612] dark:text-[#ede9f5]"
+                                  style="font-family:'Noto Serif JP',serif">@w.Kanji</span>
+                            <span class="text-[10px] text-[#8c8378] dark:text-[#6a6480]"
+                                  style="font-family:'JetBrains Mono',monospace">@w.Lectura</span>
+                            <span class="text-xs italic text-[#5a5048] dark:text-[#9590A8]"
+                                  style="font-family:'Cormorant Garamond',serif">@w.SignificadoEs</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Frases -->
+    @if (Entry.Oraciones.Any())
+    {
+        <div>
+            <button @onclick="() => _showFrases = !_showFrases"
+                    class="flex items-center gap-1.5 text-[9px] text-[#8c8378] dark:text-[#6a6480] tracking-[0.18em] uppercase w-full text-left mb-2 hover:text-[#1a1612] dark:hover:text-[#ede9f5] transition-colors"
+                    style="font-family:'JetBrains Mono',monospace">
+                <span>@(_showFrases ? "▾" : "▸")</span>
+                <span>Frases · @Entry.Oraciones.Count</span>
+            </button>
+            @if (_showFrases)
+            {
+                <div class="flex flex-col gap-3">
+                    @foreach (var o in Entry.Oraciones)
+                    {
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-sm text-[#1a1612] dark:text-[#ede9f5]"
+                                  style="font-family:'Noto Serif JP',serif">@o.Japones</span>
+                            <span class="text-xs italic text-[#5a5048] dark:text-[#9590A8]"
+                                  style="font-family:'Cormorant Garamond',serif">@o.SignificadoEs</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Eliminar -->
+    <div class="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+        <button @onclick="() => OnDelete.InvokeAsync(Entry.Id)" title="Eliminar"
+                class="p-1.5 text-[#8c8378] hover:text-[#b34234] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public KanjiEntry Entry { get; set; } = default!;
+    [Parameter] public EventCallback<Guid> OnDelete { get; set; }
+
+    private bool _showPalabras = false;
+    private bool _showFrases = false;
+}
